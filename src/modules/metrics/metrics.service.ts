@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common'
 
 @Injectable()
-export class MetricsModule {
+export class MetricsService {
     incrementAccepted(source: string, funnelStage: string, eventType: string) {
         // eslint-disable-next-line no-console
         console.log(JSON.stringify({ level: 'metrics', type: 'accepted', source, funnelStage, eventType }))
