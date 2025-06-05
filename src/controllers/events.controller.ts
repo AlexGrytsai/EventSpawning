@@ -14,6 +14,17 @@ export class EventsController {
   ) {}
 
   @Post()
+  /**
+   * Handles a webhook event.
+   *
+   * @param eventPayload - The JSON payload of the webhook event.
+   * @param correlationId - The correlation ID for the webhook event, if provided.
+   *
+   * @returns A promise that resolves with the result of processing the webhook event.
+   *
+   * @throws {BadRequestException} If the webhook event is invalid.
+   * @throws {HttpException} If an internal error occurs while processing the webhook event.
+   */
   async handleWebhook(
     @Body() eventPayload: unknown,
     @Headers('x-correlation-id') correlationId?: string
