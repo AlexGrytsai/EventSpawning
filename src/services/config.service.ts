@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { ConfigModule, ConfigService as NestConfigService } from '@nestjs/config';
+import { ConfigService as NestConfigService } from '@nestjs/config';
 import * as dotenv from 'dotenv';
 import * as path from 'path';
 
