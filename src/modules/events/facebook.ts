@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { FunnelStage, makeEventType, makeProviderEvent } from './common'
+import { makeEventType, makeProviderEvent } from './common'
 
 const FacebookEventType = makeEventType(
   ['ad.view', 'page.like', 'comment', 'video.view'] as const,
