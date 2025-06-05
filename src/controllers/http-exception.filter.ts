@@ -3,6 +3,19 @@ import { Response } from 'express'
 
 @Catch()
 export class HttpExceptionFilter implements ExceptionFilter {
+  /**
+   * Handle any exceptions that occur in the application.
+   *
+   * If the exception is an instance of `HttpException`, it will be handled
+   * according to the HTTP status code and response body defined in the exception.
+   *
+   * If the exception is not an instance of `HttpException`, it will be handled
+   * as an internal server error, and a JSON response with a status code of
+   * 500 will be returned.
+   *
+   * @param exception The exception that occurred.
+   * @param host The ArgumentsHost that contains the request and response objects.
+   */
   catch(exception: unknown, host: ArgumentsHost) {
     const ctx = host.switchToHttp()
     const response = ctx.getResponse<Response>()
