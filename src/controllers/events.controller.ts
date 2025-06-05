@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Headers, UseFilters, HttpStatus, Response } from '@nestjs/common'
+import { Controller, Post, Body, Headers, UseFilters, HttpStatus, HttpException } from '@nestjs/common'
 import { EventsService } from '../modules/events/event.service'
 import { LoggerService } from '../services/logger.service'
 import { MetricsModule } from '../modules/metrics/metrics.module'
@@ -16,32 +16,29 @@ export class EventsController {
   @Post()
   async handleWebhook(
     @Body() eventPayload: unknown,
-    @Headers('x-correlation-id') correlationId?: string,
-    @Response() res?: any
+    @Headers('x-correlation-id') correlationId?: string
   ): Promise<any> {
     try {
       const result = await this.eventsService.processEvent(eventPayload, correlationId)
       this.logger.logInfo('Webhook processed successfully', { correlationId: result.correlationId })
-      return res.status(HttpStatus.OK).json(result)
+      return result
     } catch (error) {
       this.metrics.incrementFailed(error.message || 'Unknown error')
-      this.logger.logError('Webhook processing failed', { 
+      this.logger.logError('Webhook processing failed', {
         correlationId: correlationId || 'unknown',
         error: error.message || 'Unknown error'
       })
-      
       if (error.status === 400) {
-        return res.status(HttpStatus.BAD_REQUEST).json({
+        throw new HttpException({
           statusCode: HttpStatus.BAD_REQUEST,
           message: error.message,
           details: error.details || null
-        })
+        }, HttpStatus.BAD_REQUEST)
       }
-      
-      return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
+      throw new HttpException({
         statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
         message: 'Internal server error'
-      })
+      }, HttpStatus.INTERNAL_SERVER_ERROR)
     }
   }
 } 
