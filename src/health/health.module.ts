@@ -4,6 +4,8 @@ import { HealthService } from './health.service'
 import { NatsHealthIndicator } from './nats.health-indicator'
 import { NatsService } from '../modules/nats/nats.service'
 import { LoggerService } from '../services/logger.service'
+import { PostgresHealthIndicator } from './postgres.health-indicator'
+import { PrismaService } from '../services/prisma.service'
 
 @Module({
   imports: [NatsService],
@@ -12,6 +14,8 @@ import { LoggerService } from '../services/logger.service'
     HealthService,
     NatsHealthIndicator,
     LoggerService,
+    PostgresHealthIndicator,
+    PrismaService,
   ],
   exports: [HealthService],
 })
