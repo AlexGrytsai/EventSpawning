@@ -1,19 +1,55 @@
-import { Injectable, Inject } from '@nestjs/common'
+import { Injectable, Inject, OnModuleInit } from '@nestjs/common'
 import { JetStreamClient, headers } from 'nats'
 import { LoggerService } from '../../services/logger.service'
 
 @Injectable()
-export class NatsPublisher {
+export class NatsPublisher implements OnModuleInit {
+  private readyPromise: Promise<void>
+  private readyResolve: () => void
+
+  /**
+   * Constructs a new instance of the NatsPublisher.
+   *
+   * @param js - The JetStreamClient instance injected for publishing events.
+   * @param logger - The LoggerService instance for logging messages and errors.
+   */
   constructor(
     @Inject('NATS_JS') private readonly js: JetStreamClient,
     private readonly logger: LoggerService,
-  ) {}
+  ) {
+    this.readyPromise = new Promise((resolve) => {
+      this.readyResolve = resolve
+    })
+  }
 
+  /**
+   * Resolves the readyPromise when the module is initialized. This is a temporary
+   * measure until NestJS supports async providers.
+   */
+  async onModuleInit() {
+    this.readyResolve()
+  }
+
+  /**
+   * Publishes an event to NATS JetStream.
+   *
+   * The event is published to a subject in the form of
+   * `<baseTopic>.events.<eventType>`.
+   *
+   * @param baseTopic - The base topic to publish to.
+   * @param event - The event to publish, which must include an `eventType` property.
+   * @param correlationId - An optional correlation ID to include in the headers.
+   *
+   * @returns A promise that resolves with the result of publishing the message.
+   *
+   * @throws If publishing the message fails.
+   */
   async publish(
     baseTopic: string,
     event: { eventType: string },
     correlationId?: string,
   ) {
+    await this.readyPromise
     const subject = this.formatSubject(baseTopic, event.eventType)
     const hdrs = this.buildHeaders(correlationId)
 
@@ -39,6 +75,14 @@ export class NatsPublisher {
     }
   }
 
+  /**
+   * Formats a subject string in the form of `<baseTopic>.events.<eventType>`.
+   *
+   * @param base - The base topic to use.
+   * @param type - The event type to append to the subject.
+   *
+   * @returns The formatted subject string.
+   */
   private formatSubject(base: string, type: string): string {
     return `${base}.events.${type}`
   }
