@@ -3,7 +3,7 @@ import { v4 as uuidv4 } from 'uuid'
 import { EventSchema } from './event.zod'
 import { LoggerService } from '../../services/logger.service'
 import { NatsPublisher } from '../nats/nats.publisher'
-import { MetricsModule } from '../metrics/metrics.module'
+import { MetricsService } from '../metrics/metrics.service'
 
 @Injectable()
 /**
@@ -15,7 +15,7 @@ export class EventsService {
   constructor(
     private readonly logger: LoggerService,
     private readonly nats: NatsPublisher,
-    private readonly metrics: MetricsModule
+    private readonly metrics: MetricsService
   ) {}
 
   async processEvent(eventPayload: unknown, correlationId?: string) {
