@@ -2,21 +2,9 @@ import { z } from 'zod'
 
 export const FunnelStage = z.enum(['top', 'bottom'])
 
-export const makeEventType = <T extends string, U extends string>(
-  top: readonly [T, ...T[]],
-  bottom: readonly [U, ...U[]],
-) => z.union([z.enum(top), z.enum(bottom)])
-
-export const makeProviderEvent = <
-  S extends string,
-  ET extends z.ZodTypeAny,
-  U extends z.ZodTypeAny,
-  E extends z.ZodTypeAny,
->(
+const makeBaseEvent = <S extends string, ET extends z.ZodEnum<any>>(
   source: S,
-  eventType: ET,
-  user: U,
-  engagement: E,
+  eventType: ET
 ) =>
   z.object({
     eventId: z.string(),
@@ -24,5 +12,14 @@ export const makeProviderEvent = <
     source: z.literal(source),
     funnelStage: FunnelStage,
     eventType,
-    data: z.object({ user, engagement }),
   })
+
+export const FooEvent = makeBaseEvent(
+  'foo',
+  z.enum(['fooStarted', 'fooCompleted'] as const)
+).extend({
+  data: z.object({
+    user: z.object({ id: z.string(), name: z.string() }),
+    engagement: z.object({ clicks: z.number() }),
+  }),
+})
