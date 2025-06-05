@@ -32,7 +32,7 @@ services:
     ports:
       - 3000:3000
     healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:3000/healthz" ]
+      test: [ "CMD", "curl", "-f", "http://localhost:3000/health/readiness" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -74,7 +74,7 @@ services:
       grafana:
         condition: service_started
     healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:3001/healthz" ]
+      test: [ "CMD", "curl", "-f", "http://localhost:3001/health/readiness" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -101,7 +101,7 @@ services:
       grafana:
         condition: service_started
     healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:3002/healthz" ]
+      test: [ "CMD", "curl", "-f", "http://localhost:3002/health/readiness" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -127,7 +127,7 @@ services:
       grafana:
         condition: service_started
     healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:4000/healthz" ]
+      test: [ "CMD", "curl", "-f", "http://localhost:4000/health/readiness" ]
       interval: 10s
       timeout: 5s
       retries: 5
