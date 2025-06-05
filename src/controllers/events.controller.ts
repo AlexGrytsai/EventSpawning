@@ -34,10 +34,12 @@ export class EventsController {
       })
       
       if (error.status === 400) {
+        const response = typeof error.getResponse === 'function' ? error.getResponse() : {}
+        const details = response && typeof response === 'object' && 'details' in response ? response.details : null
         throw new HttpException({
           statusCode: HttpStatus.BAD_REQUEST,
           message: error.message,
-          details: error.details || null
+          details
         }, HttpStatus.BAD_REQUEST)
       }
       throw new HttpException({
