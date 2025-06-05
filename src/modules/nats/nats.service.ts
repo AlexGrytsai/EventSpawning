@@ -23,4 +23,4 @@ import { connect } from 'nats'
   ],
   exports: ['NATS_JS', NatsPublisher],
 })
-export class NatsModule {} 
+export class NatsService {}
