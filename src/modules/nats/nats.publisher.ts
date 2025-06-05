@@ -1,7 +1,7 @@
 import { Injectable, Inject, OnModuleInit, HttpException, HttpStatus } from '@nestjs/common'
 import { JetStreamClient, headers } from 'nats'
 import { LoggerService } from '../../services/logger.service'
-import { MetricsModule } from '../metrics/metrics.module'
+import { MetricsService } from '../metrics/metrics.service'
 
 @Injectable()
 export class NatsPublisher implements OnModuleInit {
@@ -18,7 +18,7 @@ export class NatsPublisher implements OnModuleInit {
   constructor(
     @Inject('NATS_JS') private readonly js: JetStreamClient,
     private readonly logger: LoggerService,
-    private readonly metrics: MetricsModule,
+    private readonly metrics: MetricsService,
   ) {
     this.readyPromise = new Promise((resolve) => {
       this.readyResolve = resolve
@@ -79,7 +79,8 @@ export class NatsPublisher implements OnModuleInit {
         correlationId,
         error: err.message,
       })
-      this.metrics.incrementFailed(err.message || 'Unknown error')
+      const errorCategory = err?.name || 'UnknownError'
+      this.metrics.incrementFailed(errorCategory)
       throw new HttpException(
         'Failed to publish event to NATS', 
         HttpStatus.INTERNAL_SERVER_ERROR
