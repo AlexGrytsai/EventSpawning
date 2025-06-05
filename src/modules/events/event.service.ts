@@ -18,6 +18,14 @@ export class EventsService {
     private readonly metrics: MetricsService
   ) {}
 
+  /**
+   * Validates the given event payload and logs it.
+   * If the event is invalid, throws a BadRequestException.
+   * If the event is valid, publishes it to NATS and tracks metrics.
+   * @param eventPayload The event payload to validate and process.
+   * @param correlationId An optional correlation ID to track the event.
+   * @returns A promise that resolves with a result object containing a success flag and the correlation ID.
+   */
   async processEvent(eventPayload: unknown, correlationId?: string) {
     const id = correlationId || uuidv4()
     const start = Date.now()
