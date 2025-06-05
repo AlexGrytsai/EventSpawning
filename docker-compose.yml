@@ -28,6 +28,7 @@ services:
     environment:
       - EVENT_ENDPOINT=${EVENT_ENDPOINT}
       - NATS_URL=${NATS_URL}
+      - LOG_LEVEL=${LOG_LEVEL:-info}
     ports:
       - 3000:3000
     healthcheck:
@@ -58,6 +59,7 @@ services:
     environment:
       - NATS_URL=${NATS_URL}
       - DATABASE_URL=${DATABASE_URL}
+      - LOG_LEVEL=${LOG_LEVEL:-info}
     depends_on:
       nats:
         condition: service_healthy
@@ -84,6 +86,7 @@ services:
     environment:
       - NATS_URL=${NATS_URL}
       - DATABASE_URL=${DATABASE_URL}
+      - LOG_LEVEL=${LOG_LEVEL:-info}
     depends_on:
       nats:
         condition: service_healthy
@@ -109,6 +112,7 @@ services:
       dockerfile: reporter.Dockerfile
     environment:
       - DATABASE_URL=${DATABASE_URL}
+      - LOG_LEVEL=${LOG_LEVEL:-info}
     ports:
       - 4000:4000
     depends_on:
