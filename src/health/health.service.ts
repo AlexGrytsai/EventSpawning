@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common'
 import { NatsHealthIndicator } from './nats.health-indicator'
 import { PostgresHealthIndicator } from './postgres.health-indicator'
 import { LoggerService } from '../services/logger.service'
+import { ConfigService } from '../services/config.service'
 
 export interface HealthCheck {
   name: string
@@ -17,11 +18,18 @@ export interface ReadinessResult {
 
 @Injectable()
 export class HealthService {
+  private readonly dependencies: string[]
+
   constructor(
     private readonly natsHealthIndicator: NatsHealthIndicator,
     private readonly postgresHealthIndicator: PostgresHealthIndicator,
     private readonly logger: LoggerService,
-  ) {}
+    private readonly config: ConfigService,
+  ) {
+    // HEALTH_DEPENDENCIES=nats,postgres
+    const deps = this.config.get('HEALTH_DEPENDENCIES')
+    this.dependencies = deps ? deps.split(',').map(d => d.trim().toLowerCase()) : ['postgres']
+  }
 
   async checkLiveness(): Promise<boolean> {
     try {
@@ -36,37 +44,37 @@ export class HealthService {
     const checks: HealthCheck[] = []
     let isReady = true
 
-    try {
-      const natsCheck = await this.natsHealthIndicator.check()
-      checks.push(natsCheck)
-      
-      if (natsCheck.status === 'error') {
-        isReady = false
+    for (const dep of this.dependencies) {
+      if (dep === 'nats') {
+        try {
+          const natsCheck = await this.natsHealthIndicator.check()
+          checks.push(natsCheck)
+          if (natsCheck.status === 'error') isReady = false
+        } catch (error) {
+          this.logger.logError('Readiness check failed', { error: error.message })
+          checks.push({
+            name: 'nats',
+            status: 'error',
+            message: error.message
+          })
+          isReady = false
+        }
       }
-    } catch (error) {
-      this.logger.logError('Readiness check failed', { error: error.message })
-      checks.push({
-        name: 'nats',
-        status: 'error',
-        message: error.message
-      })
-      isReady = false
-    }
-
-    try {
-      const postgresCheck = await this.postgresHealthIndicator.check()
-      checks.push(postgresCheck)
-      if (postgresCheck.status === 'error') {
-        isReady = false
+      if (dep === 'postgres') {
+        try {
+          const postgresCheck = await this.postgresHealthIndicator.check()
+          checks.push(postgresCheck)
+          if (postgresCheck.status === 'error') isReady = false
+        } catch (error) {
+          this.logger.logError('Readiness check failed', { error: error.message })
+          checks.push({
+            name: 'postgres',
+            status: 'error',
+            message: error.message
+          })
+          isReady = false
+        }
       }
-    } catch (error) {
-      this.logger.logError('Readiness check failed', { error: error.message })
-      checks.push({
-        name: 'postgres',
-        status: 'error',
-        message: error.message
-      })
-      isReady = false
     }
 
     this.logger.logInfo('Readiness check completed', { 
