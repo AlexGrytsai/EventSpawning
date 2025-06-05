@@ -1,10 +1,10 @@
 import { z } from 'zod'
-import { makeEventType, makeProviderEvent } from './common'
+import { FunnelStage } from './common'
 
-const FacebookEventType = makeEventType(
-  ['ad.view', 'page.like', 'comment', 'video.view'] as const,
-  ['ad.click', 'form.submission', 'checkout.complete'] as const,
-)
+const FacebookEventType = z.enum([
+  'ad.view', 'page.like', 'comment', 'video.view',
+  'ad.click', 'form.submission', 'checkout.complete',
+] as const)
 
 const FacebookUser = z.object({
   userId: z.string(),
@@ -30,4 +30,24 @@ const FacebookEngagement = z.union([
   }),
 ])
 
-export const FacebookEvent = makeProviderEvent('facebook', FacebookEventType, FacebookUser, FacebookEngagement)
+const makeBaseEvent = <S extends string, ET extends z.ZodEnum<any>>(
+  source: S,
+  eventType: ET
+) =>
+  z.object({
+    eventId: z.string(),
+    timestamp: z.string(),
+    source: z.literal(source),
+    funnelStage: FunnelStage,
+    eventType,
+  })
+
+export const FacebookEvent = makeBaseEvent(
+  'facebook',
+  FacebookEventType
+).extend({
+  data: z.object({
+    user: FacebookUser,
+    engagement: FacebookEngagement,
+  }),
+})

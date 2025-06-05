@@ -1,10 +1,10 @@
 import { z } from 'zod'
-import { makeEventType, makeProviderEvent } from './common'
+import { FunnelStage } from './common'
 
-const TiktokEventType = makeEventType(
-  ['video.view', 'like', 'share', 'comment'] as const,
-  ['profile.visit', 'purchase', 'follow'] as const,
-)
+const TiktokEventType = z.enum([
+  'video.view', 'like', 'share', 'comment',
+  'profile.visit', 'purchase', 'follow',
+] as const)
 
 const TiktokUser = z.object({
   userId: z.string(),
@@ -28,4 +28,24 @@ const TiktokEngagement = z.union([
   }),
 ])
 
-export const TiktokEvent = makeProviderEvent('tiktok', TiktokEventType, TiktokUser, TiktokEngagement)
+const makeBaseEvent = <S extends string, ET extends z.ZodEnum<any>>(
+  source: S,
+  eventType: ET
+) =>
+  z.object({
+    eventId: z.string(),
+    timestamp: z.string(),
+    source: z.literal(source),
+    funnelStage: FunnelStage,
+    eventType,
+  })
+
+export const TiktokEvent = makeBaseEvent(
+  'tiktok',
+  TiktokEventType
+).extend({
+  data: z.object({
+    user: TiktokUser,
+    engagement: TiktokEngagement,
+  }),
+})
