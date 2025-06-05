@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common'
+import { Injectable, BadRequestException } from '@nestjs/common'
 import { v4 as uuidv4 } from 'uuid'
 import { EventSchema } from './event.zod'
 import { LoggerService } from '../../services/logger.service'
@@ -24,12 +24,16 @@ export class EventsService {
     const result = EventSchema.safeParse(eventPayload)
     if (!result.success) {
       this.logger.logError('Validation failed', { correlationId: id, errors: result.error.errors })
-      this.metrics.incrementFailed(result.error.errors.map(e => e.path.join('.')).join(','))
-      throw { status: 400, message: 'Validation error', details: result.error.errors }
+      // Increment a fixed metric label to avoid high-cardinality
+      this.metrics.incrementFailed('validation_failed')
+      throw new BadRequestException({ 
+        message: 'Validation error', 
+        details: result.error.errors 
+      })
     }
     const event = result.data
     this.logger.logEvent('Event received', { correlationId: id, eventType: event.eventType, source: event.source })
-    await this.nats.publish(event.source, event)
+    await this.nats.publish(event.source, event, id)
     this.metrics.incrementAccepted(event.source, event.funnelStage, event.eventType)
     this.metrics.observeProcessingTime(Date.now() - start)
     return { success: true, correlationId: id }
