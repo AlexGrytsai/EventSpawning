@@ -6,6 +6,11 @@ import { NatsPublisher } from '../nats/nats.publisher'
 import { MetricsModule } from '../metrics/metrics.module'
 
 @Injectable()
+/**
+ * Service responsible for processing incoming events.
+ * Validates the event payload, logs the event, publishes it to NATS,
+ * and tracks metrics such as processing time and failure rates.
+ */
 export class EventsService {
   constructor(
     private readonly logger: LoggerService,
@@ -29,4 +34,4 @@ export class EventsService {
     this.metrics.observeProcessingTime(Date.now() - start)
     return { success: true, correlationId: id }
   }
-} 
+}
