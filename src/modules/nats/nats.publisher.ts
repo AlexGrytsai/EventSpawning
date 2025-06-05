@@ -1,77 +1,53 @@
-import { Injectable } from '@nestjs/common'
-import { connect, NatsConnection, JetStreamClient, headers } from 'nats'
+import { Injectable, Inject } from '@nestjs/common'
+import { JetStreamClient, headers } from 'nats'
 import { LoggerService } from '../../services/logger.service'
-import { ConfigService } from '../../services/config.service'
 
 @Injectable()
 export class NatsPublisher {
-  private nc: NatsConnection
-  private js: JetStreamClient
-
   constructor(
+    @Inject('NATS_JS') private readonly js: JetStreamClient,
     private readonly logger: LoggerService,
-    private readonly config: ConfigService
+  ) {}
+
+  async publish(
+    baseTopic: string,
+    event: { eventType: string },
+    correlationId?: string,
   ) {
-    this.connect()
-  }
-
-  private async connect() {
-    try {
-      this.nc = await connect({ servers: this.config.get('NATS_URL') })
-      this.js = this.nc.jetstream()
-      this.logger.logInfo('Connected to NATS JetStream', {})
-    } catch (error) {
-      this.logger.logError('Failed to connect to NATS', { error: error.message })
-      // Retry connection after delay
-      setTimeout(() => this.connect(), 5000)
-    }
-  }
-
-  async publish(topic: string, event: unknown, correlationId?: string) {
-    if (!this.js) {
-      this.logger.logError('Failed to publish: NATS JetStream not connected', { topic, correlationId })
-      throw new Error('NATS JetStream not connected')
-    }
+    const subject = this.formatSubject(baseTopic, event.eventType)
+    const hdrs = this.buildHeaders(correlationId)
 
     try {
-      // Create topic name based on event source and type
-      const eventObj = event as any
-      const topicName = `${topic}.events.${eventObj.eventType}`
-      
-      // Create headers with correlation ID
-      const hdrs = headers()
-      if (correlationId) {
-        hdrs.append('x-correlation-id', correlationId)
-      }
-
-      // Publish to JetStream
       const result = await this.js.publish(
-        topicName,
+        subject,
         JSON.stringify(event),
-        { headers: hdrs }
+        { headers: hdrs },
       )
-
-      this.logger.logInfo('Event published to NATS', { 
-        topic: topicName, 
+      this.logger.logInfo('Event published to NATS', {
+        subject,
         correlationId,
-        sequence: result.seq
+        seq: result.seq,
       })
-      
       return result
-    } catch (error) {
-      this.logger.logError('Failed to publish event to NATS', { 
-        topic, 
+    } catch (err) {
+      this.logger.logError('Failed to publish event to NATS', {
+        subject,
         correlationId,
-        error: error.message 
+        error: err.message,
       })
-      throw error
+      throw err
     }
   }
 
-  async onModuleDestroy() {
-    if (this.nc) {
-      await this.nc.drain()
-      this.logger.logInfo('NATS connection closed gracefully', {})
+  private formatSubject(base: string, type: string): string {
+    return `${base}.events.${type}`
+  }
+
+  private buildHeaders(correlationId?: string) {
+    const h = headers()
+    if (correlationId) {
+      h.append('x-correlation-id', correlationId)
     }
+    return h
   }
 } 
