@@ -1,0 +1,182 @@
+services:
+  publisher:
+    image: andriiuni/events
+    environment:
+      - EVENT_ENDPOINT=${EVENT_ENDPOINT}
+    depends_on:
+      gateway:
+        condition: service_healthy
+      fb-collector:
+        condition: service_healthy
+      ttk-collector:
+        condition: service_healthy
+      reporter:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      nats:
+        condition: service_healthy
+      prometheus:
+        condition: service_started
+      grafana:
+        condition: service_started
+
+  gateway:
+    build:
+      context: ./src/services
+      dockerfile: gateway.Dockerfile
+    environment:
+      - EVENT_ENDPOINT=${EVENT_ENDPOINT}
+      - NATS_URL=${NATS_URL}
+    ports:
+      - 3000:3000
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:3000/healthz" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    depends_on:
+      nats:
+        condition: service_healthy
+      fb-collector:
+        condition: service_healthy
+      ttk-collector:
+        condition: service_healthy
+      reporter:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      prometheus:
+        condition: service_started
+      grafana:
+        condition: service_started
+
+  fb-collector:
+    build:
+      context: ./src/services
+      dockerfile: fb-collector.Dockerfile
+    environment:
+      - NATS_URL=${NATS_URL}
+      - DATABASE_URL=${DATABASE_URL}
+    depends_on:
+      nats:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      ttk-collector:
+        condition: service_healthy
+      reporter:
+        condition: service_healthy
+      prometheus:
+        condition: service_started
+      grafana:
+        condition: service_started
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:3001/healthz" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  ttk-collector:
+    build:
+      context: ./src/services
+      dockerfile: ttk-collector.Dockerfile
+    environment:
+      - NATS_URL=${NATS_URL}
+      - DATABASE_URL=${DATABASE_URL}
+    depends_on:
+      nats:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      fb-collector:
+        condition: service_healthy
+      reporter:
+        condition: service_healthy
+      prometheus:
+        condition: service_started
+      grafana:
+        condition: service_started
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:3002/healthz" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  reporter:
+    build:
+      context: ./src/services
+      dockerfile: reporter.Dockerfile
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+    ports:
+      - 4000:4000
+    depends_on:
+      postgres:
+        condition: service_healthy
+      fb-collector:
+        condition: service_healthy
+      ttk-collector:
+        condition: service_healthy
+      prometheus:
+        condition: service_started
+      grafana:
+        condition: service_started
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:4000/healthz" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  postgres:
+    image: postgres:18-alpine
+    restart: always
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+    ports:
+      - 5432:5432
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD", "pg_isready", "-U", "postgres" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  nats:
+    image: nats:2.10-alpine
+    command: [ "-js" ]
+    ports:
+      - 4222:4222
+      - 8222:8222
+    volumes:
+      - natsdata:/data
+    healthcheck:
+      test: [ "CMD", "nats-server", "--signal=healthcheck" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  prometheus:
+    image: prom/prometheus:latest
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheusdata:/prometheus
+    ports:
+      - 9090:9090
+
+  grafana:
+    image: grafana/grafana:latest
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning
+      - grafanadata:/var/lib/grafana
+    ports:
+      - 3005:3000
+
+volumes:
+  pgdata:
+  natsdata:
+  prometheusdata:
+  grafanadata: 
