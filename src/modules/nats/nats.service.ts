@@ -10,10 +10,11 @@ import { connect } from 'nats'
     {
       provide: 'NATS_JS',
       useFactory: async (config: ConfigService) => {
+        const natsUrl = config.get('NATS_URL') ?? 'nats://localhost:4222'
         const nc = await connect({
-          servers: [config.get('NATS_URL')],
+          servers: [natsUrl],
           reconnect: true,
-          maxReconnects: -1,
+          maxReconnectAttempts: -1,
           reconnectTimeWait: 2000,
         })
         return nc.jetstream()
