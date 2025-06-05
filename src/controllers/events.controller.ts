@@ -1,7 +1,7 @@
 import { Controller, Post, Body, Headers, UseFilters, HttpStatus, HttpException, BadRequestException } from '@nestjs/common'
 import { EventsService } from '../modules/events/event.service'
 import { LoggerService } from '../services/logger.service'
-import { MetricsModule } from '../modules/metrics/metrics.module'
+import { MetricsService } from '../modules/metrics/metrics.service'
 import { HttpExceptionFilter } from './http-exception.filter'
 
 @Controller('events')
@@ -10,7 +10,7 @@ export class EventsController {
   constructor(
     private readonly eventsService: EventsService,
     private readonly logger: LoggerService,
-    private readonly metrics: MetricsModule
+    private readonly metrics: MetricsService
   ) {}
 
   @Post()
