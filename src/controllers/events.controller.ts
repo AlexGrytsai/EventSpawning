@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Headers, UseFilters, HttpStatus, HttpException } from '@nestjs/common'
+import { Controller, Post, Body, Headers, UseFilters, HttpStatus, HttpException, BadRequestException } from '@nestjs/common'
 import { EventsService } from '../modules/events/event.service'
 import { LoggerService } from '../services/logger.service'
 import { MetricsModule } from '../modules/metrics/metrics.module'
@@ -23,11 +23,16 @@ export class EventsController {
       this.logger.logInfo('Webhook processed successfully', { correlationId: result.correlationId })
       return result
     } catch (error) {
-      this.metrics.incrementFailed(error.message || 'Unknown error')
+      // Only increment metrics for non-validation errors (validation errors are already tracked in the service)
+      if (!(error instanceof BadRequestException)) {
+        this.metrics.incrementFailed(error.message || 'Unknown error')
+      }
+      
       this.logger.logError('Webhook processing failed', {
         correlationId: correlationId || 'unknown',
         error: error.message || 'Unknown error'
       })
+      
       if (error.status === 400) {
         throw new HttpException({
           statusCode: HttpStatus.BAD_REQUEST,
