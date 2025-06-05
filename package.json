@@ -8,6 +8,7 @@
   },
   "private": true,
   "dependencies": {
+    "@nestjs/config": "^4.0.2",
     "@nestjs/core": "^11.1.2"
   }
 }
