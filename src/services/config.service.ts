@@ -24,7 +24,9 @@ export class ConfigService {
 
   getBoolean(key: string): boolean | undefined {
     const value = this.get(key);
-    if (value === undefined) return undefined;
+    if (value === undefined) {
+      return undefined;
+    }
     return value === 'true' || value === '1';
   }
 } 
