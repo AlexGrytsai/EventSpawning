@@ -32,25 +32,15 @@ services:
     ports:
       - 3000:3000
     healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:3000/healthz" ]
+      test: [ "CMD", "curl", "-f", "http://localhost:3000/health/liveness" ]
       interval: 10s
       timeout: 5s
       retries: 5
     depends_on:
       nats:
         condition: service_healthy
-      fb-collector:
-        condition: service_healthy
-      ttk-collector:
-        condition: service_healthy
-      reporter:
-        condition: service_healthy
       postgres:
         condition: service_healthy
-      prometheus:
-        condition: service_started
-      grafana:
-        condition: service_started
 
   fb-collector:
     build:
@@ -65,16 +55,8 @@ services:
         condition: service_healthy
       postgres:
         condition: service_healthy
-      ttk-collector:
-        condition: service_healthy
-      reporter:
-        condition: service_healthy
-      prometheus:
-        condition: service_started
-      grafana:
-        condition: service_started
     healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:3001/healthz" ]
+      test: [ "CMD", "curl", "-f", "http://localhost:3001/health/liveness" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -92,16 +74,8 @@ services:
         condition: service_healthy
       postgres:
         condition: service_healthy
-      fb-collector:
-        condition: service_healthy
-      reporter:
-        condition: service_healthy
-      prometheus:
-        condition: service_started
-      grafana:
-        condition: service_started
     healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:3002/healthz" ]
+      test: [ "CMD", "curl", "-f", "http://localhost:3002/health/liveness" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -118,16 +92,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-      fb-collector:
-        condition: service_healthy
-      ttk-collector:
-        condition: service_healthy
-      prometheus:
-        condition: service_started
-      grafana:
-        condition: service_started
     healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:4000/healthz" ]
+      test: [ "CMD", "curl", "-f", "http://localhost:4000/health/liveness" ]
       interval: 10s
       timeout: 5s
       retries: 5
