@@ -15,8 +15,26 @@ export class ShutdownService {
 
   async shutdown() {
     this.health.setReadiness(false)
+    const errors: unknown[] = []
     if (this.events) {
-      await this.events.awaitAllTasksDone()
+      try {
+        await this.events.awaitAllTasksDone()
+      } catch (e) {
+        errors.push(e)
+      }
+    }
+    try {
+      await this.prisma.onModuleDestroy()
+    } catch (e) {
+      errors.push(e)
+    }
+    try {
+      await this.nats.onModuleDestroy()
+    } catch (e) {
+      errors.push(e)
+    }
+    if (errors.length) {
+      throw errors[0]
     }
   }
 } 
