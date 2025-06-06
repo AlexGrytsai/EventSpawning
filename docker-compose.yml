@@ -109,7 +109,7 @@ services:
       start_period: 30s
 
   postgres:
-    image: postgres:18-alpine
+    image: postgres:latest
     restart: always
     environment:
       - POSTGRES_USER=${POSTGRES_USER}
@@ -127,7 +127,7 @@ services:
       start_period: 30s
 
   nats:
-    image: nats:2.10-alpine
+    image: nats:latest
     command: [ "-js" ]
     ports:
       - 4222:4222
