@@ -19,6 +19,7 @@ export interface ReadinessResult {
 @Injectable()
 export class HealthService {
   private readonly dependencies: string[]
+  private readonly indicators: Record<string, { check(): Promise<HealthCheck> }>
   private isShuttingDown = false
   private isReady = true
 
@@ -31,6 +32,10 @@ export class HealthService {
     // HEALTH_DEPENDENCIES=nats,postgres
     const deps = this.config.get('HEALTH_DEPENDENCIES')
     this.dependencies = deps ? deps.split(',').map(d => d.trim().toLowerCase()) : ['postgres']
+    this.indicators = {
+      nats: this.natsHealthIndicator,
+      postgres: this.postgresHealthIndicator,
+    }
   }
 
   setReadiness(isReady: boolean) {
@@ -56,35 +61,16 @@ export class HealthService {
     let isReady = true
 
     for (const dep of this.dependencies) {
-      if (dep === 'nats') {
-        try {
-          const natsCheck = await this.natsHealthIndicator.check()
-          checks.push(natsCheck)
-          if (natsCheck.status === 'error') isReady = false
-        } catch (error) {
-          this.logger.logError('Readiness check failed', { error: error.message })
-          checks.push({
-            name: 'nats',
-            status: 'error',
-            message: error.message
-          })
-          isReady = false
-        }
-      }
-      if (dep === 'postgres') {
-        try {
-          const postgresCheck = await this.postgresHealthIndicator.check()
-          checks.push(postgresCheck)
-          if (postgresCheck.status === 'error') isReady = false
-        } catch (error) {
-          this.logger.logError('Readiness check failed', { error: error.message })
-          checks.push({
-            name: 'postgres',
-            status: 'error',
-            message: error.message
-          })
-          isReady = false
-        }
+      const indicator = this.indicators[dep]
+      if (!indicator) continue
+      try {
+        const result = await indicator.check()
+        checks.push(result)
+        if (result.status === 'error') isReady = false
+      } catch (error) {
+        this.logger.logError('Readiness check failed', { error: error.message })
+        checks.push({ name: dep, status: 'error', message: error.message })
+        isReady = false
       }
     }
 
