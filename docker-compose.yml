@@ -32,7 +32,7 @@ services:
     ports:
       - 3000:3000
     healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:3000/health/readiness" ]
+      test: [ "CMD", "curl", "-f", "http://localhost:3000/health/liveness" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -56,7 +56,7 @@ services:
       postgres:
         condition: service_healthy
     healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:3001/health/readiness" ]
+      test: [ "CMD", "curl", "-f", "http://localhost:3001/health/liveness" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -75,7 +75,7 @@ services:
       postgres:
         condition: service_healthy
     healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:3002/health/readiness" ]
+      test: [ "CMD", "curl", "-f", "http://localhost:3002/health/liveness" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -93,7 +93,7 @@ services:
       postgres:
         condition: service_healthy
     healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:4000/health/readiness" ]
+      test: [ "CMD", "curl", "-f", "http://localhost:4000/health/liveness" ]
       interval: 10s
       timeout: 5s
       retries: 5
