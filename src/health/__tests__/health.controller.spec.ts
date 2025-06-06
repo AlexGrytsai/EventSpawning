@@ -12,7 +12,9 @@ describe('HealthController', () => {
 
   const mockConfigService = {
     get: jest.fn((key: string) => {
-      if (key === 'SERVICE_NAME') return 'test-service'
+      if (key === 'SERVICE_NAME') {
+        return 'test-service'
+      }
       return undefined
     })
   }
