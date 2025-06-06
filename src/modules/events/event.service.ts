@@ -62,7 +62,9 @@ export class EventsService {
   }
 
   awaitAllTasksDone(): Promise<void> {
-    if (this.activeTasks === 0) return Promise.resolve()
+    if (this.activeTasks === 0) {
+      return Promise.resolve()
+    }
     if (!this.allTasksDonePromise) {
       this.allTasksDonePromise = new Promise(resolve => {
         this.allTasksDoneResolver = resolve
