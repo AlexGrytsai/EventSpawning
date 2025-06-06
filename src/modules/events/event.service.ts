@@ -47,7 +47,13 @@ export class EventsService {
       }
       const event = result.data
       this.logger.logEvent('Event received', { correlationId: id, eventType: event.eventType, source: event.source })
-      await this.nats.publish(event.source, event, id)
+      try {
+        await this.nats.publish(event.source, event, id)
+      } catch (err) {
+        this.metrics.incrementFailed('publish_failed')
+        this.logger.logError('Publish failed', { correlationId: id, error: err instanceof Error ? err.message : err })
+        throw err
+      }
       this.metrics.incrementAccepted(event.source, event.funnelStage, event.eventType)
       this.metrics.observeProcessingTime(Date.now() - start)
       return { success: true, correlationId: id }
