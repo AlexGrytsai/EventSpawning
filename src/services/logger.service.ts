@@ -17,14 +17,32 @@ export class LoggerService {
         })
     }
 
+    /**
+     * Logs an informational message with additional metadata.
+     *
+     * @param message - The informational message to log.
+     * @param meta - A record containing additional metadata to include in the log entry.
+     */
     logInfo(message: string, meta: Record<string, unknown>) {
         this.logger.info(meta, message)
     }
 
+    /**
+     * Logs a general event message with additional metadata.
+     *
+     * @param message - The event message to log.
+     * @param meta - A record containing additional metadata to include in the log entry.
+     */
     logEvent(message: string, meta: Record<string, unknown>) {
         this.logger.info(meta, message)
     }
 
+    /**
+     * Logs an error message with additional metadata.
+     *
+     * @param message - The error message to log.
+     * @param meta - A record containing additional metadata to include in the log entry.
+     */
     logError(message: string, meta: Record<string, unknown>) {
         this.logger.error(meta, message)
     }

@@ -20,6 +20,12 @@ services:
         condition: service_started
       grafana:
         condition: service_started
+    healthcheck:
+      test: ["CMD", "sh", "-c", "curl -f http://localhost:3000/health/live && curl -f http://localhost:3000/health/ready"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
   gateway:
     build:
@@ -32,10 +38,11 @@ services:
     ports:
       - 3000:3000
     healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:3000/health/liveness" ]
+      test: ["CMD", "sh", "-c", "curl -f http://localhost:3000/health/live && curl -f http://localhost:3000/health/ready"]
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 30s
     depends_on:
       nats:
         condition: service_healthy
@@ -56,10 +63,11 @@ services:
       postgres:
         condition: service_healthy
     healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:3001/health/liveness" ]
+      test: ["CMD", "sh", "-c", "curl -f http://localhost:3001/health/live && curl -f http://localhost:3001/health/ready"]
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 30s
 
   ttk-collector:
     build:
@@ -75,10 +83,11 @@ services:
       postgres:
         condition: service_healthy
     healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:3002/health/liveness" ]
+      test: ["CMD", "sh", "-c", "curl -f http://localhost:3002/health/live && curl -f http://localhost:3002/health/ready"]
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 30s
 
   reporter:
     build:
@@ -93,10 +102,11 @@ services:
       postgres:
         condition: service_healthy
     healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:4000/health/liveness" ]
+      test: ["CMD", "sh", "-c", "curl -f http://localhost:4000/health/live && curl -f http://localhost:4000/health/ready"]
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 30s
 
   postgres:
     image: postgres:18-alpine
@@ -110,10 +120,11 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: [ "CMD", "pg_isready", "-U", "postgres" ]
+      test: ["CMD", "pg_isready", "-U", "postgres"]
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 30s
 
   nats:
     image: nats:2.10-alpine
@@ -124,10 +135,11 @@ services:
     volumes:
       - natsdata:/data
     healthcheck:
-      test: [ "CMD", "nats-server", "--signal=healthcheck" ]
+      test: ["CMD", "nats-server", "--signal=healthcheck"]
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 30s
 
   prometheus:
     image: prom/prometheus:latest
@@ -136,6 +148,12 @@ services:
       - prometheusdata:/prometheus
     ports:
       - 9090:9090
+    healthcheck:
+      test: ["CMD", "sh", "-c", "curl -f http://localhost:9090/-/healthy"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
   grafana:
     image: grafana/grafana:latest
@@ -144,6 +162,12 @@ services:
       - grafanadata:/var/lib/grafana
     ports:
       - 3005:3000
+    healthcheck:
+      test: ["CMD", "sh", "-c", "curl -f http://localhost:3000/api/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
 volumes:
   pgdata:
