@@ -59,4 +59,37 @@ describe('ShutdownService', () => {
     expect(prisma.onModuleDestroy).toHaveBeenCalled()
     expect(nats.onModuleDestroy).toHaveBeenCalled()
   })
+})
+
+describe.each([
+  {
+    name: 'events.awaitAllTasksDone',
+    failMock: () => events.awaitAllTasksDone.mockRejectedValueOnce(new Error('events error')),
+    error: 'events error',
+    called: [() => expect(events.awaitAllTasksDone).toHaveBeenCalled(), () => expect(prisma.onModuleDestroy).toHaveBeenCalled(), () => expect(nats.onModuleDestroy).toHaveBeenCalled()],
+  },
+  {
+    name: 'prisma.onModuleDestroy',
+    failMock: () => prisma.onModuleDestroy.mockRejectedValueOnce(new Error('prisma error')),
+    error: 'prisma error',
+    called: [() => expect(events.awaitAllTasksDone).toHaveBeenCalled(), () => expect(prisma.onModuleDestroy).toHaveBeenCalled(), () => expect(nats.onModuleDestroy).toHaveBeenCalled()],
+  },
+  {
+    name: 'nats.onModuleDestroy',
+    failMock: () => nats.onModuleDestroy.mockRejectedValueOnce(new Error('nats error')),
+    error: 'nats error',
+    called: [() => expect(events.awaitAllTasksDone).toHaveBeenCalled(), () => expect(prisma.onModuleDestroy).toHaveBeenCalled(), () => expect(nats.onModuleDestroy).toHaveBeenCalled()],
+  },
+])('shutdown error handling: $name', ({ failMock, error, called }) => {
+  beforeEach(() => {
+    jest.clearAllMocks()
+  })
+
+  it('continues shutdown and sets readiness to false', async () => {
+    failMock()
+    const service = createService()
+    await expect(service.shutdown()).rejects.toThrow(error)
+    expect(health.setReadiness).toHaveBeenCalledWith(false)
+    called.forEach(fn => fn())
+  })
 }) 
