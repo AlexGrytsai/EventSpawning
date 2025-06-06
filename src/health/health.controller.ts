@@ -53,4 +53,14 @@ export class HealthController {
       })
     }
   }
+
+  @Get('live')
+  async live(@Res() res: Response) {
+    return this.liveness(res)
+  }
+
+  @Get('ready')
+  async ready(@Res() res: Response) {
+    return this.readiness(res)
+  }
 }
