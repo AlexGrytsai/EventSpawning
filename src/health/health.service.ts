@@ -19,6 +19,8 @@ export interface ReadinessResult {
 @Injectable()
 export class HealthService {
   private readonly dependencies: string[]
+  private isShuttingDown = false
+  private isReady = true
 
   constructor(
     private readonly natsHealthIndicator: NatsHealthIndicator,
@@ -31,6 +33,15 @@ export class HealthService {
     this.dependencies = deps ? deps.split(',').map(d => d.trim().toLowerCase()) : ['postgres']
   }
 
+  setReadiness(isReady: boolean) {
+    this.isReady = isReady
+    if (!isReady) this.isShuttingDown = true
+  }
+
+  isShuttingDownNow() {
+    return this.isShuttingDown
+  }
+
   async checkLiveness(): Promise<boolean> {
     try {
       return true
@@ -41,6 +52,9 @@ export class HealthService {
   }
 
   async checkReadiness(): Promise<ReadinessResult> {
+    if (!this.isReady) {
+      return { isReady: false, checks: [] }
+    }
     const checks: HealthCheck[] = []
     let isReady = true
 
