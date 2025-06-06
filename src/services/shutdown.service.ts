@@ -13,6 +13,12 @@ export class ShutdownService {
     @Optional() private readonly events?: EventsService
   ) {}
 
+  /**
+   * Gracefully shuts down the application.
+   * It sets readiness to false, waits for all tasks to be processed,
+   * and then shuts down all dependencies.
+   * If any of the operations fail, it will throw the first failure.
+   */
   async shutdown() {
     this.health.setReadiness(false)
     const errors: unknown[] = []
