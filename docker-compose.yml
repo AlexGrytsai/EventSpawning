@@ -20,6 +20,11 @@ services:
         condition: service_started
       grafana:
         condition: service_started
+    healthcheck:
+      test: ["CMD", "sh", "-c", "curl -f http://localhost:3000/health/live && curl -f http://localhost:3000/health/ready"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   gateway:
     build:
@@ -32,7 +37,7 @@ services:
     ports:
       - 3000:3000
     healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:3000/health/liveness" ]
+      test: ["CMD", "sh", "-c", "curl -f http://localhost:3000/health/live && curl -f http://localhost:3000/health/ready"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -56,7 +61,7 @@ services:
       postgres:
         condition: service_healthy
     healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:3001/health/liveness" ]
+      test: ["CMD", "sh", "-c", "curl -f http://localhost:3001/health/live && curl -f http://localhost:3001/health/ready"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -75,7 +80,7 @@ services:
       postgres:
         condition: service_healthy
     healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:3002/health/liveness" ]
+      test: ["CMD", "sh", "-c", "curl -f http://localhost:3002/health/live && curl -f http://localhost:3002/health/ready"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -93,7 +98,7 @@ services:
       postgres:
         condition: service_healthy
     healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:4000/health/liveness" ]
+      test: ["CMD", "sh", "-c", "curl -f http://localhost:4000/health/live && curl -f http://localhost:4000/health/ready"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -110,7 +115,7 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: [ "CMD", "pg_isready", "-U", "postgres" ]
+      test: ["CMD", "pg_isready", "-U", "postgres"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -124,7 +129,7 @@ services:
     volumes:
       - natsdata:/data
     healthcheck:
-      test: [ "CMD", "nats-server", "--signal=healthcheck" ]
+      test: ["CMD", "nats-server", "--signal=healthcheck"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -136,6 +141,11 @@ services:
       - prometheusdata:/prometheus
     ports:
       - 9090:9090
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "http://localhost:9090/-/healthy"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   grafana:
     image: grafana/grafana:latest
@@ -144,6 +154,11 @@ services:
       - grafanadata:/var/lib/grafana
     ports:
       - 3005:3000
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "http://localhost:3000/api/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
 volumes:
   pgdata:
