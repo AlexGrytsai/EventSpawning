@@ -19,7 +19,11 @@ export class ConfigService {
 
   getNumber(key: string): number | undefined {
     const value = this.get(key);
-    return value ? Number(value) : undefined;
+    if (value === undefined) {
+      return undefined;
+    }
+    const num = Number(value);
+    return isNaN(num) ? undefined : num;
   }
 
   getBoolean(key: string): boolean | undefined {
