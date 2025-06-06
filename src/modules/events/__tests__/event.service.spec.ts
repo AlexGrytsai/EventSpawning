@@ -1,6 +1,5 @@
 import { EventsService } from '../event.service';
 import { LoggerService } from '../../../services/logger.service';
-import { NatsPublisher } from '../../nats/nats.publisher';
 import { MetricsService } from '../../metrics/metrics.service';
 import { register } from 'prom-client';
 

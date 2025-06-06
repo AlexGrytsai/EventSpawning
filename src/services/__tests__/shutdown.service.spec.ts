@@ -1,5 +1,4 @@
 import { ShutdownService } from '../shutdown.service'
-import { MetricsService } from '../../modules/metrics/metrics.service'
 
 let health: any
 let events: any
