@@ -35,7 +35,9 @@ export class HealthService {
 
   setReadiness(isReady: boolean) {
     this.isReady = isReady
-    if (!isReady) this.isShuttingDown = true
+    if (!isReady) {
+      this.isShuttingDown = true
+    }
   }
 
   isShuttingDownNow() {
@@ -43,12 +45,7 @@ export class HealthService {
   }
 
   async checkLiveness(): Promise<boolean> {
-    try {
-      return true
-    } catch (error) {
-      this.logger.logError('Liveness check failed', { error: error.message })
-      return false
-    }
+    return true
   }
 
   async checkReadiness(): Promise<ReadinessResult> {
