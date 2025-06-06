@@ -19,10 +19,24 @@ export interface ReadinessResult {
 @Injectable()
 export class HealthService {
   private readonly dependencies: string[]
+  /**
+   * The health indicators available. Each key is the name of the
+   * dependency (e.g. "nats" or "postgres"), and the value is an
+   * object with a `check` method that returns a Promise resolving to a
+   * `HealthCheck` object.
+   */
   private readonly indicators: Record<string, { check(): Promise<HealthCheck> }>
   private isShuttingDown = false
   private isReady = true
 
+  /**
+   * The constructor for the HealthService.
+   *
+   * @param natsHealthIndicator The health indicator for NATS
+   * @param postgresHealthIndicator The health indicator for Postgres
+   * @param logger The logger service
+   * @param config The configuration service
+   */
   constructor(
     private readonly natsHealthIndicator: NatsHealthIndicator,
     private readonly postgresHealthIndicator: PostgresHealthIndicator,
@@ -38,6 +52,12 @@ export class HealthService {
     }
   }
 
+  /**
+   * Sets the readiness state of the application.
+   *
+   * @param isReady - A boolean indicating if the application is ready.
+   *                  If false, the application is marked as shutting down.
+   */
   setReadiness(isReady: boolean) {
     this.isReady = isReady
     if (!isReady) {
@@ -45,14 +65,38 @@ export class HealthService {
     }
   }
 
+  /**
+   * Indicates whether the application is currently shutting down.
+   *
+   * @returns true if the application is shutting down, false otherwise.
+   */
   isShuttingDownNow() {
     return this.isShuttingDown
   }
 
+  /**
+   * Always returns true. The purpose of this method is to allow the liveness probe
+   * to check if the application is running and responding to requests.
+   * @returns true
+   */
   async checkLiveness(): Promise<boolean> {
     return true
   }
 
+  /**
+   * Runs the readiness checks for all registered dependencies.
+   *
+   * The readiness checks are used to determine if the application is ready
+   * to receive traffic. The readiness checks are run in parallel and the
+   * result is a single object indicating whether the application is ready
+   * and the results of the individual checks.
+   *
+   * If any of the checks fail, the application is marked as not ready.
+   *
+   * @returns An object with a boolean `isReady` property and an array of
+   *          `HealthCheck` objects containing the results of the individual
+   *          checks.
+   */
   async checkReadiness(): Promise<ReadinessResult> {
     if (!this.isReady) {
       return { isReady: false, checks: [] }
