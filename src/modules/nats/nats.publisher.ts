@@ -1,10 +1,10 @@
-import { Injectable, Inject, OnModuleInit, HttpException, HttpStatus } from '@nestjs/common'
+import { Injectable, Inject, OnModuleInit, OnModuleDestroy, HttpException, HttpStatus } from '@nestjs/common'
 import { JetStreamClient, headers } from 'nats'
 import { LoggerService } from '../../services/logger.service'
 import { MetricsService } from '../metrics/metrics.service'
 
 @Injectable()
-export class NatsPublisher implements OnModuleInit {
+export class NatsPublisher implements OnModuleInit, OnModuleDestroy {
   private readyPromise: Promise<void>
   private readyResolve: () => void
 
@@ -106,5 +106,11 @@ export class NatsPublisher implements OnModuleInit {
       h.append('x-correlation-id', correlationId)
     }
     return h
+  }
+
+  async onModuleDestroy() {
+    if (typeof (this.js as any).close === 'function') {
+      await (this.js as any).close()
+    }
   }
 } 
