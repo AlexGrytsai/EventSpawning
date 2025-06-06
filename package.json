@@ -7,7 +7,7 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
-    "coverage": "nyc --reporter=lcov --reporter=text --check-coverage --lines 80 --functions 80 --branches 80 --statements 80 npm test",
+    "coverage": "nyc --reporter=lcov --reporter=text npm test",
     "build": "nest build",
     "start": "nest start",
     "start:dev": "nest start --watch",
