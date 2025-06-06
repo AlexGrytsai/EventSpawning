@@ -25,6 +25,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 30s
 
   gateway:
     build:
@@ -41,6 +42,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 30s
     depends_on:
       nats:
         condition: service_healthy
@@ -65,6 +67,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 30s
 
   ttk-collector:
     build:
@@ -84,6 +87,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 30s
 
   reporter:
     build:
@@ -102,6 +106,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 30s
 
   postgres:
     image: postgres:18-alpine
@@ -119,6 +124,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 30s
 
   nats:
     image: nats:2.10-alpine
@@ -133,6 +139,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 30s
 
   prometheus:
     image: prom/prometheus:latest
@@ -146,6 +153,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 30s
 
   grafana:
     image: grafana/grafana:latest
@@ -159,6 +167,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 30s
 
 volumes:
   pgdata:
