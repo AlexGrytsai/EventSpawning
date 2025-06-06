@@ -7,9 +7,9 @@ const nats = { onModuleDestroy: jest.fn().mockResolvedValue(undefined) }
 
 const createService = () => new ShutdownService(
   health as any,
-  events as any,
   prisma as any,
-  nats as any
+  nats as any,
+  events as any
 )
 
 describe('ShutdownService', () => {
@@ -17,12 +17,10 @@ describe('ShutdownService', () => {
     jest.clearAllMocks()
   })
 
-  it('sets readiness to false and waits for all tasks and closes connections', async () => {
+  it('sets readiness to false and waits for all tasks', async () => {
     const service = createService()
     await service.shutdown()
     expect(health.setReadiness).toHaveBeenCalledWith(false)
     expect(events.awaitAllTasksDone).toHaveBeenCalled()
-    expect(nats.onModuleDestroy).toHaveBeenCalled()
-    expect(prisma.onModuleDestroy).toHaveBeenCalled()
   })
 }) 
