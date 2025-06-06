@@ -149,7 +149,7 @@ services:
     ports:
       - 9090:9090
     healthcheck:
-      test: ["CMD", "wget", "--spider", "http://localhost:9090/-/healthy"]
+      test: ["CMD", "sh", "-c", "curl -f http://localhost:9090/-/healthy"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -163,7 +163,7 @@ services:
     ports:
       - 3005:3000
     healthcheck:
-      test: ["CMD", "wget", "--spider", "http://localhost:3000/api/health"]
+      test: ["CMD", "sh", "-c", "curl -f http://localhost:3000/api/health"]
       interval: 10s
       timeout: 5s
       retries: 5
