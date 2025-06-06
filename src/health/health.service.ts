@@ -62,11 +62,15 @@ export class HealthService {
 
     for (const dep of this.dependencies) {
       const indicator = this.indicators[dep]
-      if (!indicator) continue
+      if (!indicator) {
+        continue
+      }
       try {
         const result = await indicator.check()
         checks.push(result)
-        if (result.status === 'error') isReady = false
+        if (result.status === 'error') {
+          isReady = false
+        }
       } catch (error) {
         this.logger.logError('Readiness check failed', { error: error.message })
         checks.push({ name: dep, status: 'error', message: error.message })
