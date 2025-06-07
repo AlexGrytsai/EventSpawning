@@ -52,6 +52,12 @@ export class NatsPublisher implements OnModuleInit, OnModuleDestroy {
     event: { eventType: string },
     correlationId?: string,
   ) {
+    if (!this.readyResolve) {
+      throw new HttpException(
+        'NatsPublisher is not initialized yet',
+        HttpStatus.SERVICE_UNAVAILABLE
+      )
+    }
     await this.readyPromise
     const subject = this.formatSubject(baseTopic, event.eventType)
     const hdrs = this.buildHeaders(correlationId)
