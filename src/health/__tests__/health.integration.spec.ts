@@ -20,7 +20,8 @@ describe('Health endpoints integration', () => {
       checkReadiness: jest.fn().mockResolvedValue({
         isReady: true,
         checks: [{ name: 'db', status: 'ok' }]
-      })
+      }),
+      isShuttingDownNow: jest.fn().mockReturnValue(false)
     }
     const mockPrismaService: Partial<PrismaService> = {
       $queryRaw: jest.fn().mockResolvedValue(1)
