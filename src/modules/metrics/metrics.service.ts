@@ -65,7 +65,7 @@ export class MetricsService {
      *
      * @returns The current metrics.
      */
-    getMetrics() {
+    getMetrics(): Promise<string> {
         return register.metrics()
     }
 }
