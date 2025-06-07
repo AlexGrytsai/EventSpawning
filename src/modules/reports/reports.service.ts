@@ -114,4 +114,48 @@ export class ReportsService {
       },
     }
   }
+
+  async getDemographicsReport(filter: any, correlationId: string) {
+    const where: any = {}
+    if (filter.from || filter.to) {
+      where.AND = where.AND || []
+      if (filter.from) where.AND.push({ createdAt: { gte: filter.from } })
+      if (filter.to) where.AND.push({ createdAt: { lte: filter.to } })
+    }
+    if (filter.source) where.source = filter.source
+    if (filter.age) where.age = filter.age
+    if (filter.gender) where.gender = filter.gender
+    if (filter.followersMin !== undefined) where.followers = { ...where.followers, gte: filter.followersMin }
+    if (filter.followersMax !== undefined) where.followers = { ...where.followers, lte: filter.followersMax }
+    if (filter.locationCountry || filter.locationCity) {
+      where.location = {}
+      if (filter.locationCountry) where.location.country = filter.locationCountry
+      if (filter.locationCity) where.location.city = filter.locationCity
+    }
+
+    let groupBy: Array<'age' | 'gender' | 'location' | 'followers' | 'source'> = []
+    if (filter.source === 'facebook') {
+      groupBy = ['age', 'gender', 'location']
+    } else if (filter.source === 'tiktok') {
+      groupBy = ['followers']
+    } else {
+      groupBy = ['source']
+    }
+
+    const result = await this.prisma.demographics.groupBy({
+      by: groupBy as any,
+      where,
+      _count: { _all: true },
+    })
+
+    this.logger.logInfo('Demographics report aggregation', { correlationId, filter, count: result.length })
+
+    return result.map(item => ({
+      group: groupBy.reduce((acc, key) => {
+        acc[key] = item[key]
+        return acc
+      }, {} as Record<string, any>),
+      count: item._count ? (item._count as any)._all : 0,
+    }))
+  }
 } 
