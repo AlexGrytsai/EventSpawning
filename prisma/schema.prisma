@@ -1,0 +1,56 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id
+  source       String
+  name         String?
+  age          Int?
+  gender       String?
+  location     Json?
+  followers    Int?
+  events       Event[]
+}
+
+model Event {
+  id           String   @id
+  timestamp    DateTime
+  source       String
+  funnelStage  String
+  eventType    String
+  userId       String?
+  campaignId   String?
+  engagement   Json?
+  raw          Json?
+  user         User?    @relation(fields: [userId], references: [id])
+  campaign     Campaign? @relation("CampaignEvents", fields: [campaignId], references: [id])
+}
+
+model Campaign {
+  id           String   @id
+  events       Event[]  @relation("CampaignEvents")
+}
+
+model RevenueEvent {
+  id           String   @id
+  eventId      String
+  amount       Float
+  currency     String?
+  campaignId   String?
+  timestamp    DateTime
+}
+
+model Demographics {
+  id           String   @id
+  userId       String
+  age          Int?
+  gender       String?
+  location     Json?
+  followers    Int?
+} 
