@@ -3,9 +3,9 @@ import { INestApplication } from '@nestjs/common'
 import * as request from 'supertest'
 import { HealthController } from '../controllers/health.controller'
 import { HealthService, ReadinessResult } from '../services/health.service'
-import { ConfigService } from '../../../services/config.service'
+import { ConfigService } from '../../../common/services/config.service'
 import { describe, it, expect, beforeEach, afterEach, jest } from '@jest/globals'
-import { PrismaService } from '../../../services/prisma.service'
+import { PrismaService } from '../../../common/services/prisma.service'
 
 describe('HealthController', () => {
   let app: INestApplication

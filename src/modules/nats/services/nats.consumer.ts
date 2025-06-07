@@ -1,10 +1,10 @@
 import { Injectable, Inject } from '@nestjs/common'
 import { JetStreamClient, consumerOpts, StringCodec } from 'nats'
 import { v4 as uuidv4 } from 'uuid'
-import { LoggerService } from '../../../services/logger.service'
-import { CorrelationIdService } from '../../../services/correlation-id.service'
-import { EventValidationService } from '../../../services/event-validation.service'
-import { EventPersistenceService } from '../../../services/event-persistence.service'
+import { LoggerService } from '../../../common/services/logger.service'
+import { CorrelationIdService } from '../../../common/services/correlation-id.service'
+import { EventValidationService } from '../../../common/services/event-validation.service'
+import { EventPersistenceService } from '../../../common/services/event-persistence.service'
 
 @Injectable()
 export class NatsConsumer {

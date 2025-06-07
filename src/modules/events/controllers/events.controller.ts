@@ -1,6 +1,6 @@
 import { Controller, Post, Body, Headers, UseFilters, HttpStatus, HttpException, BadRequestException } from '@nestjs/common'
 import { EventsService } from '../services/event.service'
-import { LoggerService } from '../../../services/logger.service'
+import { LoggerService } from '../../../common/services/logger.service'
 import { MetricsService } from '../../metrics/services/metrics.service'
 import { HttpExceptionFilter } from '../../../common/filters/http-exception.filter'
 import { v4 as uuidv4 } from 'uuid'

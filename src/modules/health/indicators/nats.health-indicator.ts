@@ -1,7 +1,7 @@
 import { Injectable, Inject } from '@nestjs/common'
 import { JetStreamClient, JetStreamManager } from 'nats'
 import { HealthCheck } from '../services/health.service'
-import { LoggerService } from '../../../services/logger.service'
+import { LoggerService } from '../../../common/services/logger.service'
 
 @Injectable()
 export class NatsHealthIndicator {

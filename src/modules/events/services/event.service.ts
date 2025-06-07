@@ -1,12 +1,12 @@
 import { Injectable, BadRequestException } from '@nestjs/common'
 import { v4 as uuidv4 } from 'uuid'
 import { EventSchema } from '../dto/event.zod'
-import { LoggerService } from '../../../services/logger.service'
+import { LoggerService } from '../../../common/services/logger.service'
 import { NatsPublisher } from '../../nats/services/nats.publisher'
 import { MetricsService } from '../../metrics/services/metrics.service'
-import { PrismaService } from '../../../services/prisma.service'
+import { PrismaService } from '../../../common/services/prisma.service'
 import { Prisma } from '@prisma/client'
-import { CorrelationIdService } from '../../../services/correlation-id.service'
+import { CorrelationIdService } from '../../../common/services/correlation-id.service'
 
 @Injectable()
 /**

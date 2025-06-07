@@ -1,4 +1,4 @@
-import { ConfigService } from '../config.service';
+import { ConfigService } from '../services/config.service';
 import { ConfigService as NestConfigService } from '@nestjs/config';
 
 describe('ConfigService', () => {

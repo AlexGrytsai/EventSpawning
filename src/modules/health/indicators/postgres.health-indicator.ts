@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common'
-import { PrismaService } from '../../../services/prisma.service'
+import { PrismaService } from '../../../common/services/prisma.service'
 import { HealthCheck } from '../services/health.service'
-import { LoggerService } from '../../../services/logger.service'
+import { LoggerService } from '../../../common/services/logger.service'
 
 @Injectable()
 export class PostgresHealthIndicator {

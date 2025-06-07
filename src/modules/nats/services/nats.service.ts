@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common'
-import { ConfigService } from '../../../services/config.service'
+import { ConfigService } from '../../../common/services/config.service'
 import { NatsPublisher } from './nats.publisher'
 import { connect } from 'nats'
 

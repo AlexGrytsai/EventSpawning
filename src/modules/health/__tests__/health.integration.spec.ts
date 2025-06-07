@@ -3,8 +3,8 @@ import { INestApplication } from '@nestjs/common'
 import * as request from 'supertest'
 import { HealthController } from '../controllers/health.controller'
 import { HealthService } from '../services/health.service'
-import { ConfigService } from '../../../services/config.service'
-import { PrismaService } from '../../../services/prisma.service'
+import { ConfigService } from '../../../common/services/config.service'
+import { PrismaService } from '../../../common/services/prisma.service'
 
 describe('Health endpoints integration', () => {
   let app: INestApplication

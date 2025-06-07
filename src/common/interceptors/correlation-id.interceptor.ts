@@ -1,7 +1,7 @@
 import { Injectable, NestInterceptor, ExecutionContext, CallHandler } from '@nestjs/common'
 import { Observable, defer } from 'rxjs'
 import { v4 as uuidv4 } from 'uuid'
-import { CorrelationIdService } from './correlation-id.service'
+import { CorrelationIdService } from '../services/correlation-id.service'
 
 @Injectable()
 export class CorrelationIdInterceptor implements NestInterceptor {

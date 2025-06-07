@@ -1,9 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing'
 import { INestApplication, Module } from '@nestjs/common'
 import * as request from 'supertest'
-import { ShutdownService } from '../shutdown.service'
+import { ShutdownService } from '../services/shutdown.service'
 import { HealthService } from '../../modules/health/services/health.service'
-import { PrismaService } from '../prisma.service'
+import { PrismaService } from '../services/prisma.service'
 import { NatsPublisher } from '../../modules/nats/services/nats.publisher'
 import { EventsService } from '../../modules/events/services/event.service'
 

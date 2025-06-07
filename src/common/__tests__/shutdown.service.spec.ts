@@ -1,4 +1,4 @@
-import { ShutdownService } from '../shutdown.service'
+import { ShutdownService } from '../services/shutdown.service'
 
 let health: any
 let events: any

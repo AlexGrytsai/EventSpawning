@@ -1,5 +1,5 @@
 import { EventsController } from '../controllers/events.controller';
-import { LoggerService } from '../../../services/logger.service';
+import { LoggerService } from '../../../common/services/logger.service';
 import { MetricsService } from '../../metrics/services/metrics.service';
 import { register } from 'prom-client';
 import { HealthService } from '../../health/services/health.service';

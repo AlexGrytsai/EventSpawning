@@ -1,6 +1,6 @@
 import { ReportsService } from '../services/reports.service'
-import { PrismaService } from '../../../services/prisma.service'
-import { LoggerService } from '../../../services/logger.service'
+import { PrismaService } from '../../../common/services/prisma.service'
+import { LoggerService } from '../../../common/services/logger.service'
 import { MetricsService } from '../../metrics/services/metrics.service'
 
 describe('ReportsService - getRevenueReport', () => {
