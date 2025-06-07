@@ -2,25 +2,40 @@ import { EventsService } from '../event.service';
 import { LoggerService } from '../../../services/logger.service';
 import { MetricsService } from '../../metrics/metrics.service';
 import { register } from 'prom-client';
+import { Prisma } from '@prisma/client'
+import { PrismaService } from '../../../services/prisma.service'
+
+class MockPrismaClientKnownRequestError extends Error {
+  code: string;
+  meta: any;
+  constructor(message: string, code: string, meta: any) {
+    super(message);
+    this.name = 'PrismaClientKnownRequestError';
+    this.code = code;
+    this.meta = meta;
+  }
+}
 
 describe('EventsService', () => {
   let service: EventsService;
   let natsPublisher: { publish: jest.Mock };
   let metricsService: MetricsService;
   let loggerService: LoggerService;
+  let prisma: { event: { create: jest.Mock } };
 
   beforeEach(() => {
     register.clear();
     natsPublisher = { publish: jest.fn() };
     metricsService = new MetricsService() as any;
     loggerService = new LoggerService({ get: jest.fn() } as any);
+    prisma = { event: { create: jest.fn() } };
     jest.spyOn(metricsService, 'incrementAccepted').mockImplementation(jest.fn());
     jest.spyOn(metricsService, 'incrementFailed').mockImplementation(jest.fn());
     jest.spyOn(metricsService, 'observeProcessingTime').mockImplementation(jest.fn());
     jest.spyOn(loggerService, 'logInfo').mockImplementation(jest.fn());
     jest.spyOn(loggerService, 'logEvent').mockImplementation(jest.fn());
     jest.spyOn(loggerService, 'logError').mockImplementation(jest.fn());
-    service = new EventsService(loggerService, natsPublisher as any, metricsService);
+    service = new EventsService(loggerService, natsPublisher as any, metricsService, prisma as any);
   });
 
   it('should process event successfully', async () => {
@@ -101,5 +116,24 @@ describe('EventsService', () => {
     expect(natsPublisher.publish).toHaveBeenCalled();
     expect(result.correlationId).toBeDefined();
     expect(loggerService.logEvent).toHaveBeenCalledWith('Event received', expect.objectContaining({ correlationId: result.correlationId }));
+  });
+
+  it('should return alreadyProcessed: true if eventId already exists', async () => {
+    const validPayload = {
+      eventId: 'unique-id',
+      timestamp: new Date().toISOString(),
+      source: 'tiktok',
+      funnelStage: 'top',
+      eventType: 'video.view',
+      data: {
+        user: { userId: 'u1', username: 'test', followers: 100 },
+        engagement: { watchTime: 10, percentageWatched: 100, device: 'Android', country: 'RU', videoId: 'v1' }
+      }
+    };
+    const error = new MockPrismaClientKnownRequestError('Unique constraint', 'P2002', { target: ['eventId'] });
+    prisma.event.create.mockRejectedValueOnce(error);
+    const result = await service.processEvent(validPayload, 'corr-unique');
+    expect(result).toEqual({ success: true, alreadyProcessed: true, correlationId: 'corr-unique' });
+    expect(natsPublisher.publish).not.toHaveBeenCalled();
   });
 }); 
