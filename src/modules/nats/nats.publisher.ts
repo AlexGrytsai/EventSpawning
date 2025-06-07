@@ -115,8 +115,12 @@ export class NatsPublisher implements OnModuleInit, OnModuleDestroy {
   }
 
   async onModuleDestroy() {
-    if (typeof (this.js as any).close === 'function') {
-      await (this.js as any).close()
+    interface Closable {
+      close: () => Promise<void> | void
+    }
+    const client = this.js as unknown
+    if (typeof client === 'object' && client !== null && 'close' in client && typeof (client as Closable).close === 'function') {
+      await (client as Closable).close()
     }
   }
 } 
