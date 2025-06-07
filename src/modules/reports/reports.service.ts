@@ -103,7 +103,7 @@ export class ReportsService {
     // Filtering by source (if specified) using related Event
     let filteredGroups = allGroups
     if (source) {
-      // Получаем campaignId, которые соответствуют source через Event
+      // Get campaignId that correspond to source through Event
       const campaignIds = await this.prisma.event.findMany({
         where: { source, campaignId: { in: allGroups.map(g => g.campaignId).filter((id): id is string => !!id) } },
         select: { campaignId: true },
