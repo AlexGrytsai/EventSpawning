@@ -1,6 +1,6 @@
 import { EventsController } from '../events.controller';
 import { LoggerService } from '../../services/logger.service';
-import { MetricsService } from '../../modules/metrics/metrics.service';
+import { MetricsService } from '../../modules/metrics/services/metrics.service';
 import { register } from 'prom-client';
 import { HealthService } from '../../health/health.service';
 

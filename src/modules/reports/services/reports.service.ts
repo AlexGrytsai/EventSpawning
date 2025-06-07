@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common'
 import { EventsReportFilter } from '../dto/events-report-filter.dto'
 import { PrismaService } from '../../../services/prisma.service'
 import { LoggerService } from '../../../services/logger.service'
-import { MetricsService } from '../../metrics/metrics.service'
+import { MetricsService } from '../../metrics/services/metrics.service'
 import { RevenueReportFilterDto } from '../../../reporter/dto/revenue-report-filter.dto'
 import { CorrelationIdService } from '../../../services/correlation-id.service'
 
