@@ -10,11 +10,13 @@ describe('EventsController', () => {
   let logger: LoggerService;
   let metrics: MetricsService;
   let healthService: HealthService;
+  let correlationIdService: { getId: jest.Mock };
 
   beforeEach(() => {
     register.clear();
     eventsService = { processEvent: jest.fn() };
-    logger = new LoggerService({ get: jest.fn() } as any);
+    correlationIdService = { getId: jest.fn().mockReturnValue('test-cid') } as any;
+    logger = new LoggerService({ get: jest.fn() } as any, correlationIdService as any);
     metrics = new MetricsService() as any;
     healthService = { isShuttingDownNow: jest.fn().mockReturnValue(false) } as any;
     jest.spyOn(logger, 'logInfo').mockImplementation(jest.fn());
