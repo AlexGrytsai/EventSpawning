@@ -58,8 +58,6 @@ services:
       - DATABASE_URL=${DATABASE_URL}
       - LOG_LEVEL=${LOG_LEVEL:-info}
     depends_on:
-      migrate:
-        condition: service_completed_successfully
       nats:
         condition: service_healthy
       postgres:
@@ -80,8 +78,6 @@ services:
       - DATABASE_URL=${DATABASE_URL}
       - LOG_LEVEL=${LOG_LEVEL:-info}
     depends_on:
-      migrate:
-        condition: service_completed_successfully
       nats:
         condition: service_healthy
       postgres:
@@ -103,8 +99,6 @@ services:
     ports:
       - 4000:4000
     depends_on:
-      migrate:
-        condition: service_completed_successfully
       postgres:
         condition: service_healthy
     healthcheck:
