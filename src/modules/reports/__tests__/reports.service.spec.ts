@@ -96,7 +96,7 @@ describe('ReportsService - getDemographicsReport', () => {
       { age: 30, gender: 'female', location: { country: 'RU', city: 'SPB' }, _count: { _all: 5 } },
     ])
     const filter = { source: 'facebook' }
-    const result = await service.getDemographicsReport(filter)
+    const result = await service.getDemographicsReport(filter, 'test-cid')
     expect(result).toEqual([
       { group: { age: 25, gender: 'male', location: { country: 'RU', city: 'Moscow' } }, count: 10 },
       { group: { age: 30, gender: 'female', location: { country: 'RU', city: 'SPB' } }, count: 5 },
@@ -109,7 +109,7 @@ describe('ReportsService - getDemographicsReport', () => {
       { followers: 5000, _count: { _all: 2 } },
     ])
     const filter = { source: 'tiktok' }
-    const result = await service.getDemographicsReport(filter)
+    const result = await service.getDemographicsReport(filter, 'test-cid')
     expect(result).toEqual([
       { group: { followers: 1000 }, count: 7 },
       { group: { followers: 5000 }, count: 2 },
@@ -129,7 +129,7 @@ describe('ReportsService - getDemographicsReport', () => {
       followersMin: 100,
       followersMax: 300,
     }
-    const result = await service.getDemographicsReport(filter)
+    const result = await service.getDemographicsReport(filter, 'test-cid')
     expect(result).toEqual([
       { group: { age: 18, gender: 'female', location: { country: 'RU', city: 'Kazan' } }, count: 1 },
     ])
@@ -138,7 +138,7 @@ describe('ReportsService - getDemographicsReport', () => {
   it('returns empty array if no data', async () => {
     prisma.demographics.groupBy.mockResolvedValue([])
     const filter = { source: 'facebook' }
-    const result = await service.getDemographicsReport(filter)
+    const result = await service.getDemographicsReport(filter, 'test-cid')
     expect(result).toEqual([])
   })
 }) 

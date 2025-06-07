@@ -139,7 +139,7 @@ export class ReportsService {
     }
   }
 
-  async getDemographicsReport(filter: any) {
+  async getDemographicsReport(filter: any, correlationId: string = '') {
     const where: any = {}
     if (filter.from || filter.to) {
       where.AND = where.AND || []
@@ -190,7 +190,7 @@ export class ReportsService {
       _count: { _all: true },
     })
 
-    this.logger.logInfo('Demographics report aggregation', { filter, count: result.length })
+    this.logger.logInfo('Demographics report aggregation', { filter, count: result.length, correlationId })
 
     return result.map(item => ({
       group: groupBy.reduce((acc, key) => {
