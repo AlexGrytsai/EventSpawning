@@ -7,8 +7,6 @@ import { MetricsService } from '../metrics/metrics.service'
 import { RevenueReportFilterDto } from '../../reporter/dto/revenue-report-filter.dto'
 import { CorrelationIdService } from '../../services/correlation-id.service'
 
-const prisma = new PrismaClient()
-
 @Injectable()
 export class ReportsService {
   constructor(
@@ -45,7 +43,7 @@ export class ReportsService {
       where.userId = filter.userId
     }
 
-    const result = await prisma.event.groupBy({
+    const result = await this.prisma.event.groupBy({
       by: [
         'timestamp',
         'source',
