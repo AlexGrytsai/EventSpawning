@@ -5,6 +5,7 @@ import { PrismaService } from '../../services/prisma.service'
 import { LoggerService } from '../../services/logger.service'
 import { MetricsService } from '../metrics/metrics.service'
 import { RevenueReportFilterDto } from '../../reporter/dto/revenue-report-filter.dto'
+import { CorrelationIdService } from '../../services/correlation-id.service'
 
 const prisma = new PrismaClient()
 
@@ -13,7 +14,8 @@ export class ReportsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly logger: LoggerService,
-    private readonly metrics: MetricsService
+    private readonly metrics: MetricsService,
+    private readonly correlationIdService: CorrelationIdService
   ) {}
 
   async getEventsReport(filter: EventsReportFilter) {
@@ -54,7 +56,7 @@ export class ReportsService {
     }))
   }
 
-  async getRevenueReport(filter: RevenueReportFilterDto, correlationId: string) {
+  async getRevenueReport(filter: RevenueReportFilterDto) {
     const { from, to, source, campaignId, currency, page = 1 } = filter
     const where: any = {}
     if (from || to) {
@@ -102,8 +104,8 @@ export class ReportsService {
       revenueCount: g._count._all,
     }))
 
-    this.logger.logInfo('Revenue report aggregation', { correlationId, filter, total, page, count: data.length })
-    this.metrics.observeProcessingTime(0) // Здесь можно измерять время агрегации, если нужно
+    this.logger.logInfo('Revenue report aggregation', { filter, total, page, count: data.length })
+    this.metrics.observeProcessingTime(0)
 
     return {
       data,
@@ -115,7 +117,7 @@ export class ReportsService {
     }
   }
 
-  async getDemographicsReport(filter: any, correlationId: string) {
+  async getDemographicsReport(filter: any) {
     const where: any = {}
     if (filter.from || filter.to) {
       where.AND = where.AND || []
@@ -148,7 +150,7 @@ export class ReportsService {
       _count: { _all: true },
     })
 
-    this.logger.logInfo('Demographics report aggregation', { correlationId, filter, count: result.length })
+    this.logger.logInfo('Demographics report aggregation', { filter, count: result.length })
 
     return result.map(item => ({
       group: groupBy.reduce((acc, key) => {
