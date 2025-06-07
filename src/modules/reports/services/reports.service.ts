@@ -1,11 +1,10 @@
 import { Injectable } from '@nestjs/common'
-import { PrismaClient } from '@prisma/client'
 import { EventsReportFilter } from '../dto/events-report-filter.dto'
-import { PrismaService } from '../../../services/prisma.service'
-import { LoggerService } from '../../../services/logger.service'
-import { MetricsService } from '../../metrics/metrics.service'
-import { RevenueReportFilterDto } from '../../../reporter/dto/revenue-report-filter.dto'
-import { CorrelationIdService } from '../../../services/correlation-id.service'
+import { PrismaService } from '../../../common/services/prisma.service'
+import { LoggerService } from '../../../common/services/logger.service'
+import { MetricsService } from '../../metrics/services/metrics.service'
+import { RevenueReportFilterDto } from '../../../common/dto/revenue-report-filter.dto'
+import { CorrelationIdService } from '../../../common/services/correlation-id.service'
 
 @Injectable()
 export class ReportsService {
@@ -69,54 +68,51 @@ export class ReportsService {
   }
 
   async getRevenueReport(filter: RevenueReportFilterDto) {
+    const start = Date.now()
     const { from, to, source, campaignId, currency, page = 1 } = filter
-    const where: any = {}
-    if (from || to) {
-      where.timestamp = {}
-      if (from) {
-        where.timestamp.gte = new Date(from)
-      }
-      if (to) {
-        where.timestamp.lte = new Date(to)
-      }
-    }
-    if (campaignId) {
-      where.campaignId = campaignId
-    }
-    if (currency) {
-      where.currency = currency
-    }
-    // RevenueEvent does not contain source, so we filter by campaignId only if needed
-    // For source filtering by related Events (if needed)
+    const limit = 50
+    const skip = (page - 1) * limit
 
-    // Get all groups for pagination
+    const where: any = {
+      ...(from || to
+        ? {
+            timestamp: {
+              ...(from && { gte: new Date(from) }),
+              ...(to && { lte: new Date(to) }),
+            },
+          }
+        : {}),
+      ...(campaignId && { campaignId }),
+      ...(currency && { currency }),
+    }
+
+    if (source) {
+      const rows = await this.prisma.event.findMany({
+        where: { source },
+        select: { campaignId: true },
+        distinct: ['campaignId'],
+      })
+      const validIds = rows.map(r => r.campaignId)
+      where.campaignId = { in: validIds }
+    }
+
     const allGroups = await this.prisma.revenueEvent.groupBy({
+      by: ['campaignId', 'currency'],
+      where,
+    })
+    const total = allGroups.length
+
+    const groups = await this.prisma.revenueEvent.groupBy({
       by: ['campaignId', 'currency'],
       where,
       _sum: { amount: true },
       _count: { _all: true },
-      orderBy: [{ campaignId: 'asc' }],
+      orderBy: { campaignId: 'asc' },
+      skip,
+      take: limit,
     })
 
-    // Filtering by source (if specified) using related Event
-    let filteredGroups = allGroups
-    if (source) {
-      // Get campaignId that correspond to source through Event
-      const campaignIds = await this.prisma.event.findMany({
-        where: { source, campaignId: { in: allGroups.map(g => g.campaignId).filter((id): id is string => !!id) } },
-        select: { campaignId: true },
-        distinct: ['campaignId'],
-      })
-      const validIds = campaignIds.map(c => c.campaignId)
-      filteredGroups = allGroups.filter(g => g.campaignId && validIds.includes(g.campaignId))
-    }
-
-    const total = filteredGroups.length
-    const limit = 50
-    const offset = (page - 1) * limit
-    const pagedGroups = filteredGroups.slice(offset, offset + limit)
-
-    const data = pagedGroups.map(g => ({
+    const data = groups.map(g => ({
       source: source || null,
       campaignId: g.campaignId,
       currency: g.currency,
@@ -125,7 +121,8 @@ export class ReportsService {
     }))
 
     this.logger.logInfo('Revenue report aggregation', { filter, total, page, count: data.length })
-    this.metrics.observeProcessingTime(0)
+    const processingTime = Date.now() - start
+    this.metrics.observeProcessingTime(processingTime)
 
     return {
       data,

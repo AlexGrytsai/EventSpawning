@@ -1,11 +1,11 @@
 import { Controller, Get, Query, Headers, UseFilters, HttpException, HttpStatus } from '@nestjs/common'
 import { ReportsService } from '../services/reports.service'
-import { RevenueReportFilterDto, RevenueReportFilterSchema } from '../../../reporter/dto/revenue-report-filter.dto'
+import { RevenueReportFilterDto, RevenueReportFilterSchema } from '../../../common/dto/revenue-report-filter.dto'
 import { EventsReportFilterDto } from '../dto/events-report-filter.dto'
-import { DemographicsReportFilterSchema } from '../../../reporter/dto/demographics-report-filter.dto'
-import { LoggerService } from '../../../services/logger.service'
-import { MetricsService } from '../../metrics/metrics.service'
-import { HttpExceptionFilter } from '../../../controllers/http-exception.filter'
+import { DemographicsReportFilterSchema } from '../../../common/dto/demographics-report-filter.dto'
+import { LoggerService } from '../../../common/services/logger.service'
+import { MetricsService } from '../../metrics/services/metrics.service'
+import { HttpExceptionFilter } from '../../../common/filters/http-exception.filter'
 import { v4 as uuidv4 } from 'uuid'
 
 @Controller('reports')

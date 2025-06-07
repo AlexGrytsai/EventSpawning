@@ -1,6 +1,6 @@
 import { NestFactory } from '@nestjs/core'
 import { AppModule } from './app.module'
-import { ShutdownService } from './services/shutdown.service'
+import { ShutdownService } from './common/services/shutdown.service'
 
 async function bootstrap() {
     const app = await NestFactory.create(AppModule)
