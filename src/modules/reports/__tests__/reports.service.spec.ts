@@ -11,6 +11,7 @@ describe('ReportsService - getRevenueReport', () => {
   }
   let logger: jest.Mocked<LoggerService>
   let metrics: jest.Mocked<MetricsService>
+  let correlationIdService: any
 
   beforeEach(() => {
     const revenueEvent = { groupBy: jest.fn() }
@@ -24,12 +25,13 @@ describe('ReportsService - getRevenueReport', () => {
     }
     logger = { logInfo: jest.fn() } as any
     metrics = { observeProcessingTime: jest.fn() } as any
-    service = new ReportsService(prisma, logger, metrics)
+    correlationIdService = { getId: jest.fn().mockReturnValue('test-cid') }
+    service = new ReportsService(prisma, logger, metrics, correlationIdService)
   })
 
   it('should return empty data if no revenue events', async () => {
     prisma.revenueEvent.groupBy.mockResolvedValue([])
-    const result = await service.getRevenueReport({}, 'cid')
+    const result = await service.getRevenueReport({})
     expect(result.data).toEqual([])
     expect(result.pagination.total).toBe(0)
   })
@@ -39,7 +41,7 @@ describe('ReportsService - getRevenueReport', () => {
       { campaignId: 'c1', currency: 'USD', _sum: { amount: 100 }, _count: { _all: 2 } },
       { campaignId: 'c2', currency: 'USD', _sum: { amount: 200 }, _count: { _all: 3 } },
     ])
-    const result = await service.getRevenueReport({ page: 1 }, 'cid')
+    const result = await service.getRevenueReport({ page: 1 })
     expect(result.data.length).toBe(2)
     expect(result.data[0]).toMatchObject({ campaignId: 'c1', revenueSum: 100, revenueCount: 2 })
     expect(result.pagination.total).toBe(2)
@@ -51,7 +53,7 @@ describe('ReportsService - getRevenueReport', () => {
       { campaignId: 'c2', currency: 'USD', _sum: { amount: 200 }, _count: { _all: 3 } },
     ])
     prisma.event.findMany.mockResolvedValue([{ campaignId: 'c2' }])
-    const result = await service.getRevenueReport({ source: 'facebook', page: 1 }, 'cid')
+    const result = await service.getRevenueReport({ source: 'facebook', page: 1 })
     expect(result.data.length).toBe(1)
     expect(result.data[0].campaignId).toBe('c2')
     expect(result.pagination.total).toBe(1)
@@ -65,7 +67,7 @@ describe('ReportsService - getRevenueReport', () => {
       _count: { _all: 1 },
     }))
     prisma.revenueEvent.groupBy.mockResolvedValue(groups)
-    const result = await service.getRevenueReport({ page: 2 }, 'cid')
+    const result = await service.getRevenueReport({ page: 2 })
     expect(result.data.length).toBe(10)
     expect(result.pagination.page).toBe(2)
     expect(result.pagination.limit).toBe(50)
@@ -78,12 +80,14 @@ describe('ReportsService - getDemographicsReport', () => {
   let prisma: any
   let logger: any
   let metrics: any
+  let correlationIdService: any
 
   beforeEach(() => {
     prisma = { demographics: { groupBy: jest.fn() } }
     logger = { logInfo: jest.fn() }
     metrics = { observeProcessingTime: jest.fn() }
-    service = new ReportsService(prisma, logger, metrics)
+    correlationIdService = { getId: jest.fn().mockReturnValue('test-cid') }
+    service = new ReportsService(prisma, logger, metrics, correlationIdService)
   })
 
   it('aggregates by age, gender, location for Facebook', async () => {
@@ -92,7 +96,7 @@ describe('ReportsService - getDemographicsReport', () => {
       { age: 30, gender: 'female', location: { country: 'RU', city: 'SPB' }, _count: { _all: 5 } },
     ])
     const filter = { source: 'facebook' }
-    const result = await service.getDemographicsReport(filter, 'cid')
+    const result = await service.getDemographicsReport(filter)
     expect(result).toEqual([
       { group: { age: 25, gender: 'male', location: { country: 'RU', city: 'Moscow' } }, count: 10 },
       { group: { age: 30, gender: 'female', location: { country: 'RU', city: 'SPB' } }, count: 5 },
@@ -105,7 +109,7 @@ describe('ReportsService - getDemographicsReport', () => {
       { followers: 5000, _count: { _all: 2 } },
     ])
     const filter = { source: 'tiktok' }
-    const result = await service.getDemographicsReport(filter, 'cid')
+    const result = await service.getDemographicsReport(filter)
     expect(result).toEqual([
       { group: { followers: 1000 }, count: 7 },
       { group: { followers: 5000 }, count: 2 },
@@ -125,7 +129,7 @@ describe('ReportsService - getDemographicsReport', () => {
       followersMin: 100,
       followersMax: 300,
     }
-    const result = await service.getDemographicsReport(filter, 'cid')
+    const result = await service.getDemographicsReport(filter)
     expect(result).toEqual([
       { group: { age: 18, gender: 'female', location: { country: 'RU', city: 'Kazan' } }, count: 1 },
     ])
@@ -134,7 +138,7 @@ describe('ReportsService - getDemographicsReport', () => {
   it('returns empty array if no data', async () => {
     prisma.demographics.groupBy.mockResolvedValue([])
     const filter = { source: 'facebook' }
-    const result = await service.getDemographicsReport(filter, 'cid')
+    const result = await service.getDemographicsReport(filter)
     expect(result).toEqual([])
   })
 }) 
