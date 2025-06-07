@@ -107,6 +107,7 @@ export class HealthService {
     for (const dep of this.dependencies) {
       const indicator = this.indicators[dep]
       if (!indicator) {
+        this.logger.logInfo('[HealthService] Unknown health dependency is not recognized in indicators. Please check HEALTH_DEPENDENCIES configuration.', { dependency: dep })
         continue
       }
       try {
