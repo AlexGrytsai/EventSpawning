@@ -34,6 +34,20 @@ import { connect } from 'nats'
       },
       inject: [ConfigService],
     },
+    {
+      provide: 'NATS_JSM',
+      useFactory: async (config: ConfigService) => {
+        const natsUrl = config.get('NATS_URL') ?? 'nats://localhost:4222'
+        const nc = await connect({
+          servers: [natsUrl],
+          reconnect: true,
+          maxReconnectAttempts: -1,
+          reconnectTimeWait: 2000,
+        })
+        return nc.jetstreamManager()
+      },
+      inject: [ConfigService],
+    },
   ],
   exports: ['NATS_JS', NatsPublisher],
 })
