@@ -15,9 +15,9 @@ export const FunnelStage = z.enum(['top', 'bottom'])
  *  - funnelStage: An enum value indicating the stage of the funnel.
  *  - eventType: An enum value corresponding to the given event types.
  */
-export const makeBaseEvent = <S extends string, ET extends z.ZodEnum<any>>(
+export const makeBaseEvent = <S extends string, Values extends [string, ...string[]]>(
   source: S,
-  eventType: ET
+  eventType: z.ZodEnum<Values>
 ) =>
   z.object({
     eventId: z.string(),
