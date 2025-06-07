@@ -1,4 +1,5 @@
 import { Controller, Post, Body, Headers, UseFilters, HttpStatus, HttpException, BadRequestException } from '@nestjs/common'
+import { ApiTags, ApiOperation, ApiResponse, ApiBody, ApiHeader } from '@nestjs/swagger'
 import { EventsService } from '../services/event.service'
 import { LoggerService } from '../../../common/services/logger.service'
 import { MetricsService } from '../../metrics/services/metrics.service'
@@ -6,6 +7,7 @@ import { HttpExceptionFilter } from '../../../common/filters/http-exception.filt
 import { v4 as uuidv4 } from 'uuid'
 import { HealthService } from '../../health/services/health.service'
 
+@ApiTags('Events')
 @Controller('events')
 @UseFilters(HttpExceptionFilter)
 export class EventsController {
@@ -17,17 +19,13 @@ export class EventsController {
   ) {}
 
   @Post()
-  /**
-   * Handles a webhook event.
-   *
-   * @param eventPayload - The JSON payload of the webhook event.
-   * @param correlationId - The correlation ID for the webhook event, if provided.
-   *
-   * @returns A promise that resolves with the result of processing the webhook event.
-   *
-   * @throws {BadRequestException} If the webhook event is invalid.
-   * @throws {HttpException} If an internal error occurs while processing the webhook event.
-   */
+  @ApiOperation({ summary: 'Handle webhook event', description: 'Processes a webhook event and returns the result.' })
+  @ApiBody({ description: 'Webhook event payload', type: 'object', required: true })
+  @ApiHeader({ name: 'x-correlation-id', required: false, description: 'Correlation ID for the webhook event' })
+  @ApiResponse({ status: 200, description: 'Event processed successfully', schema: { type: 'object' } })
+  @ApiResponse({ status: 400, description: 'Invalid webhook event' })
+  @ApiResponse({ status: 503, description: 'Service is shutting down' })
+  @ApiResponse({ status: 500, description: 'Internal server error' })
   async handleWebhook(
     @Body() eventPayload: unknown,
     @Headers('x-correlation-id') correlationId?: string
