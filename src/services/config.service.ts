@@ -1,17 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService as NestConfigService } from '@nestjs/config';
-import * as dotenv from 'dotenv';
-import * as path from 'path';
 
 @Injectable()
 export class ConfigService {
-  private readonly nestConfigService: NestConfigService;
-
-  constructor() {
-    const envFile = process.env.SERVICE_ENV ? `.env.${process.env.SERVICE_ENV}` : '.env';
-    dotenv.config({ path: path.resolve(process.cwd(), envFile) });
-    this.nestConfigService = new NestConfigService();
-  }
+  constructor(private readonly nestConfigService: NestConfigService) {}
 
   get(key: string): string | undefined {
     return this.nestConfigService.get<string>(key);
