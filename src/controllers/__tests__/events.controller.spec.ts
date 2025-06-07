@@ -2,23 +2,26 @@ import { EventsController } from '../events.controller';
 import { LoggerService } from '../../services/logger.service';
 import { MetricsService } from '../../modules/metrics/metrics.service';
 import { register } from 'prom-client';
+import { HealthService } from '../../health/health.service';
 
 describe('EventsController', () => {
   let controller: EventsController;
   let eventsService: { processEvent: jest.Mock };
   let logger: LoggerService;
   let metrics: MetricsService;
+  let healthService: HealthService;
 
   beforeEach(() => {
     register.clear();
     eventsService = { processEvent: jest.fn() };
     logger = new LoggerService({ get: jest.fn() } as any);
     metrics = new MetricsService() as any;
+    healthService = { isShuttingDownNow: jest.fn().mockReturnValue(false) } as any;
     jest.spyOn(logger, 'logInfo').mockImplementation(jest.fn());
     jest.spyOn(logger, 'logError').mockImplementation(jest.fn());
     jest.spyOn(metrics, 'incrementAccepted').mockImplementation(jest.fn());
     jest.spyOn(metrics, 'incrementFailed').mockImplementation(jest.fn());
-    controller = new EventsController(eventsService as any, logger, metrics);
+    controller = new EventsController(eventsService as any, logger, metrics, healthService);
   });
 
   it('should handle webhook successfully', async () => {
@@ -46,5 +49,11 @@ describe('EventsController', () => {
     eventsService.processEvent.mockRejectedValueOnce(new Error('fail'));
     await expect(controller.handleWebhook({ type: 'test' })).rejects.toThrow('Internal server error');
     expect(logger.logError).toHaveBeenCalled();
+  });
+
+  it('should return 503 if service is shutting down', async () => {
+    (healthService.isShuttingDownNow as jest.Mock).mockReturnValue(true);
+    await expect(controller.handleWebhook({ type: 'test' })).rejects.toThrow('Service is shutting down');
+    expect(eventsService.processEvent).not.toHaveBeenCalled();
   });
 }); 
