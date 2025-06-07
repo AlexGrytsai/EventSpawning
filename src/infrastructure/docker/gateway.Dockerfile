@@ -1,6 +1,7 @@
 FROM node:18-alpine
 WORKDIR /app
 COPY package*.json ./
+COPY tsconfig.json ./
 RUN npm ci --omit=dev
 COPY prisma ./prisma
 COPY src ./src
