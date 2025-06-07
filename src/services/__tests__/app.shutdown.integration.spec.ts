@@ -4,7 +4,7 @@ import * as request from 'supertest'
 import { ShutdownService } from '../shutdown.service'
 import { HealthService } from '../../health/health.service'
 import { PrismaService } from '../prisma.service'
-import { NatsPublisher } from '../../modules/nats/nats.publisher'
+import { NatsPublisher } from '../../modules/nats/services/nats.publisher'
 import { EventsService } from '../../modules/events/services/event.service'
 
 class MockHealthService {

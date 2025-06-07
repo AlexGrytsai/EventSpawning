@@ -1,7 +1,7 @@
 import { Injectable, Inject, OnModuleInit, OnModuleDestroy, HttpException, HttpStatus } from '@nestjs/common'
 import { JetStreamClient, headers } from 'nats'
-import { LoggerService } from '../../services/logger.service'
-import { MetricsService } from '../metrics/services/metrics.service'
+import { LoggerService } from '../../../services/logger.service'
+import { MetricsService } from '../../metrics/services/metrics.service'
 
 @Injectable()
 export class NatsPublisher implements OnModuleInit, OnModuleDestroy {

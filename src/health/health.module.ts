@@ -5,7 +5,7 @@ import { LoggerService } from '../services/logger.service'
 import { PostgresHealthIndicator } from './postgres.health-indicator'
 import { PrismaService } from '../services/prisma.service'
 import { NatsHealthIndicator } from './nats.health-indicator'
-import { NatsService } from '../modules/nats/nats.service'
+import { NatsService } from '../modules/nats/services/nats.service'
 import { ConfigService } from '../services/config.service'
 
 @Module({
