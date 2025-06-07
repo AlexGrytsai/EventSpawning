@@ -16,6 +16,26 @@ export class ReportsController {
   ) {}
 
   @Get('revenue')
+  /**
+   * Generate a revenue report, given a set of filters.
+   *
+   * This endpoint requires a set of filters to be specified in the query
+   * parameter. The filters are parsed using the `RevenueReportFilterSchema`.
+   *
+   * If a `x-correlation-id` header is specified, it will be used to log the
+   * result of the report generation. If not, a UUID will be generated.
+   *
+   * The report will be logged with the `logInfo` method of the logger, and the
+   * processing time will be observed with the `observeProcessingTime` method of
+   * the metrics service.
+   *
+   * If an error occurs during report generation, it will be logged with the
+   * `logError` method of the logger, and the processing time will be observed
+   * with the `observeProcessingTime` method of the metrics service. The error
+   * will be thrown as an `HttpException` with a status code of 400.
+   * @param query The filters to apply to the report.
+   * @param correlationId The correlation ID to use for logging.
+   */
   async getRevenueReport(
     @Query() query: RevenueReportFilterDto,
     @Headers('x-correlation-id') correlationId?: string
