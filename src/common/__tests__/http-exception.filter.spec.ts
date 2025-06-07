@@ -1,4 +1,4 @@
-import { HttpExceptionFilter } from '../http-exception.filter';
+import { HttpExceptionFilter } from '../filters/http-exception.filter';
 
 describe('HttpExceptionFilter', () => {
   let filter: HttpExceptionFilter;
