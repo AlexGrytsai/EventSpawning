@@ -71,4 +71,70 @@ describe('ReportsService - getRevenueReport', () => {
     expect(result.pagination.limit).toBe(50)
     expect(result.pagination.total).toBe(60)
   })
+})
+
+describe('ReportsService - getDemographicsReport', () => {
+  let service: ReportsService
+  let prisma: any
+  let logger: any
+  let metrics: any
+
+  beforeEach(() => {
+    prisma = { demographics: { groupBy: jest.fn() } }
+    logger = { logInfo: jest.fn() }
+    metrics = { observeProcessingTime: jest.fn() }
+    service = new ReportsService(prisma, logger, metrics)
+  })
+
+  it('aggregates by age, gender, location for Facebook', async () => {
+    prisma.demographics.groupBy.mockResolvedValue([
+      { age: 25, gender: 'male', location: { country: 'RU', city: 'Moscow' }, _count: { _all: 10 } },
+      { age: 30, gender: 'female', location: { country: 'RU', city: 'SPB' }, _count: { _all: 5 } },
+    ])
+    const filter = { source: 'facebook' }
+    const result = await service.getDemographicsReport(filter, 'cid')
+    expect(result).toEqual([
+      { group: { age: 25, gender: 'male', location: { country: 'RU', city: 'Moscow' } }, count: 10 },
+      { group: { age: 30, gender: 'female', location: { country: 'RU', city: 'SPB' } }, count: 5 },
+    ])
+  })
+
+  it('aggregates by followers for Tiktok', async () => {
+    prisma.demographics.groupBy.mockResolvedValue([
+      { followers: 1000, _count: { _all: 7 } },
+      { followers: 5000, _count: { _all: 2 } },
+    ])
+    const filter = { source: 'tiktok' }
+    const result = await service.getDemographicsReport(filter, 'cid')
+    expect(result).toEqual([
+      { group: { followers: 1000 }, count: 7 },
+      { group: { followers: 5000 }, count: 2 },
+    ])
+  })
+
+  it('filters by all fields', async () => {
+    prisma.demographics.groupBy.mockResolvedValue([
+      { age: 18, gender: 'female', location: { country: 'RU', city: 'Kazan' }, followers: 200, source: 'facebook', _count: { _all: 1 } },
+    ])
+    const filter = {
+      source: 'facebook',
+      age: 18,
+      gender: 'female',
+      locationCountry: 'RU',
+      locationCity: 'Kazan',
+      followersMin: 100,
+      followersMax: 300,
+    }
+    const result = await service.getDemographicsReport(filter, 'cid')
+    expect(result).toEqual([
+      { group: { age: 18, gender: 'female', location: { country: 'RU', city: 'Kazan' } }, count: 1 },
+    ])
+  })
+
+  it('returns empty array if no data', async () => {
+    prisma.demographics.groupBy.mockResolvedValue([])
+    const filter = { source: 'facebook' }
+    const result = await service.getDemographicsReport(filter, 'cid')
+    expect(result).toEqual([])
+  })
 }) 
