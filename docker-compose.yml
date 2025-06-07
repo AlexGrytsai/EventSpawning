@@ -29,7 +29,7 @@ services:
 
   gateway:
     build:
-      context: ./src/services
+      context: .
       dockerfile: src/infrastructure/docker/gateway.Dockerfile
     environment:
       - EVENT_ENDPOINT=${EVENT_ENDPOINT}
@@ -51,7 +51,7 @@ services:
 
   fb-collector:
     build:
-      context: ./src/services
+      context: .
       dockerfile: src/infrastructure/docker/fb-collector.Dockerfile
     environment:
       - NATS_URL=${NATS_URL}
@@ -71,7 +71,7 @@ services:
 
   ttk-collector:
     build:
-      context: ./src/services
+      context: .
       dockerfile: src/infrastructure/docker/ttk-collector.Dockerfile
     environment:
       - NATS_URL=${NATS_URL}
@@ -91,7 +91,7 @@ services:
 
   reporter:
     build:
-      context: ./src/services
+      context: .
       dockerfile: src/infrastructure/docker/reporter.Dockerfile
     environment:
       - DATABASE_URL=${DATABASE_URL}
