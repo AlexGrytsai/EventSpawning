@@ -36,7 +36,7 @@ export class EventPersistenceService {
         funnelStage: event.funnelStage,
         eventType: event.eventType,
         userId: user.id,
-        campaignId: event.data.engagement.campaignId ?? undefined,
+        campaignId: event.data.engagement?.campaignId ?? undefined,
         engagement: event.data.engagement,
         raw: event,
       },
