@@ -5,12 +5,14 @@ describe('LoggerService', () => {
   let consoleInfo: jest.SpyInstance;
   let consoleError: jest.SpyInstance;
   let config: any;
+  let correlationIdService: any;
 
   beforeEach(() => {
     consoleInfo = jest.spyOn(console, 'info').mockImplementation(() => {});
     consoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
     config = { get: jest.fn() };
-    service = new LoggerService(config);
+    correlationIdService = { getId: jest.fn().mockReturnValue('test-cid') };
+    service = new LoggerService(config, correlationIdService);
     jest.spyOn(service['logger'], 'info').mockImplementation(() => {});
     jest.spyOn(service['logger'], 'error').mockImplementation(() => {});
     jest.spyOn(service, 'logInfo');
