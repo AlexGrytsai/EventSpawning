@@ -68,6 +68,7 @@ export class ReportsService {
   }
 
   async getRevenueReport(filter: RevenueReportFilterDto) {
+    const start = Date.now()
     const { from, to, source, campaignId, currency, page = 1 } = filter
     const where: any = {}
     if (from || to) {
@@ -124,7 +125,8 @@ export class ReportsService {
     }))
 
     this.logger.logInfo('Revenue report aggregation', { filter, total, page, count: data.length })
-    this.metrics.observeProcessingTime(0)
+    const processingTime = Date.now() - start
+    this.metrics.observeProcessingTime(processingTime)
 
     return {
       data,
