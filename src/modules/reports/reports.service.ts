@@ -157,12 +157,6 @@ export class ReportsService {
     if (filter.gender) {
       where.gender = filter.gender
     }
-    if (filter.followersMin !== undefined) {
-      where.followers = { ...where.followers, gte: filter.followersMin }
-    }
-    if (filter.followersMax !== undefined) {
-      where.followers = { ...where.followers, lte: filter.followersMax }
-    }
     if (filter.locationCountry || filter.locationCity) {
       where.location = {}
       if (filter.locationCountry) {
@@ -170,6 +164,16 @@ export class ReportsService {
       }
       if (filter.locationCity) {
         where.location.city = filter.locationCity
+      }
+    }
+
+    if (filter.followersMin !== undefined || filter.followersMax !== undefined) {
+      where.followers = {}
+      if (filter.followersMin !== undefined) {
+        where.followers.gte = filter.followersMin
+      }
+      if (filter.followersMax !== undefined) {
+        where.followers.lte = filter.followersMax
       }
     }
 
