@@ -1,8 +1,6 @@
 import { ConfigService } from '../config.service';
 import { ConfigService as NestConfigService } from '@nestjs/config';
 
-jest.mock('@nestjs/config');
-
 describe('ConfigService', () => {
   let service: ConfigService;
   let nestConfigServiceMock: jest.Mocked<NestConfigService>;
@@ -11,8 +9,7 @@ describe('ConfigService', () => {
     nestConfigServiceMock = {
       get: jest.fn(),
     } as any;
-    (NestConfigService as jest.Mock).mockImplementation(() => nestConfigServiceMock);
-    service = new ConfigService();
+    service = new ConfigService(nestConfigServiceMock);
   });
 
   it('should get string value', () => {
