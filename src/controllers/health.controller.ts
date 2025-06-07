@@ -1,6 +1,6 @@
 import { Controller, Get, HttpStatus, Res } from '@nestjs/common'
 import { Response } from 'express'
-import { HealthService } from './health.service'
+import { HealthService } from '../health/health.service'
 import { ConfigService } from '../services/config.service'
 import { PrismaService } from '../services/prisma.service'
 

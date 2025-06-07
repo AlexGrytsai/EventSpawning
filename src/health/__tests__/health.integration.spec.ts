@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing'
 import { INestApplication } from '@nestjs/common'
 import * as request from 'supertest'
-import { HealthController } from '../health.controller'
+import { HealthController } from '../../controllers/health.controller'
 import { HealthService } from '../health.service'
 import { ConfigService } from '../../services/config.service'
 import { PrismaService } from '../../services/prisma.service'

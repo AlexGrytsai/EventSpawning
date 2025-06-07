@@ -1,5 +1,5 @@
 import { Controller, Get, Header } from '@nestjs/common'
-import { MetricsService } from './metrics.service'
+import { MetricsService } from '../modules/metrics/metrics.service'
 
 @Controller('metrics')
 export class MetricsController {

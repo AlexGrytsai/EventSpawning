@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common'
-import { HealthController } from './health.controller'
+import { HealthController } from '../controllers/health.controller'
 import { HealthService } from './health.service'
 import { LoggerService } from '../services/logger.service'
 import { PostgresHealthIndicator } from './postgres.health-indicator'
