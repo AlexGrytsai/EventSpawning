@@ -3,7 +3,7 @@ import { EventsReportFilter } from '../dto/events-report-filter.dto'
 import { PrismaService } from '../../../common/services/prisma.service'
 import { LoggerService } from '../../../common/services/logger.service'
 import { MetricsService } from '../../metrics/services/metrics.service'
-import { RevenueReportFilterDto } from '../../../reporter/dto/revenue-report-filter.dto'
+import { RevenueReportFilterDto } from '../../../common/dto/revenue-report-filter.dto'
 import { CorrelationIdService } from '../../../common/services/correlation-id.service'
 
 @Injectable()
