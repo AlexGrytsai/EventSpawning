@@ -5,6 +5,7 @@ import { HealthController } from '../health.controller'
 import { HealthService, ReadinessResult } from '../health.service'
 import { ConfigService } from '../../services/config.service'
 import { describe, it, expect, beforeEach, afterEach, jest } from '@jest/globals'
+import { PrismaService } from '../../services/prisma.service'
 
 describe('HealthController', () => {
   let app: INestApplication
@@ -20,17 +21,22 @@ describe('HealthController', () => {
   }
 
   beforeEach(async () => {
+    const mockHealthService: Partial<HealthService> = {
+      checkLiveness: jest.fn<() => Promise<boolean>>().mockResolvedValue(true),
+      checkReadiness: jest.fn<() => Promise<ReadinessResult>>().mockResolvedValue({
+        isReady: true,
+        checks: [{ name: 'db', status: 'ok' }]
+      })
+    }
+    const mockPrismaService: Partial<PrismaService> = {
+      $queryRaw: jest.fn<any>().mockImplementation(() => Promise.resolve(1))
+    }
     const moduleRef: TestingModule = await Test.createTestingModule({
       controllers: [HealthController],
       providers: [
-        {
-          provide: HealthService,
-          useValue: {
-            checkLiveness: jest.fn().mockImplementation(() => Promise.resolve(true)),
-            checkReadiness: jest.fn().mockImplementation(() => Promise.resolve({ isReady: true, checks: [] } as ReadinessResult))
-          }
-        },
-        { provide: ConfigService, useValue: mockConfigService }
+        { provide: HealthService, useValue: mockHealthService },
+        { provide: ConfigService, useValue: mockConfigService },
+        { provide: PrismaService, useValue: mockPrismaService }
       ]
     }).compile()
 
@@ -40,7 +46,9 @@ describe('HealthController', () => {
   })
 
   afterEach(async () => {
-    await app.close()
+    if (app) {
+      await app.close()
+    }
   })
 
   it('GET /health/liveness should return 200 if live', async () => {
