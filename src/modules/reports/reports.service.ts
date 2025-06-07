@@ -22,14 +22,28 @@ export class ReportsService {
     const where: any = {}
     if (filter.from || filter.to) {
       where.timestamp = {}
-      if (filter.from) where.timestamp.gte = filter.from
-      if (filter.to) where.timestamp.lte = filter.to
+      if (filter.from) {
+        where.timestamp.gte = filter.from
+      }
+      if (filter.to) {
+        where.timestamp.lte = filter.to
+      }
     }
-    if (filter.source) where.source = filter.source
-    if (filter.funnelStage) where.funnelStage = filter.funnelStage
-    if (filter.eventType) where.eventType = filter.eventType
-    if (filter.campaignId) where.campaignId = filter.campaignId
-    if (filter.userId) where.userId = filter.userId
+    if (filter.source) {
+      where.source = filter.source
+    }
+    if (filter.funnelStage) {
+      where.funnelStage = filter.funnelStage
+    }
+    if (filter.eventType) {
+      where.eventType = filter.eventType
+    }
+    if (filter.campaignId) {
+      where.campaignId = filter.campaignId
+    }
+    if (filter.userId) {
+      where.userId = filter.userId
+    }
 
     const result = await prisma.event.groupBy({
       by: [
@@ -61,11 +75,19 @@ export class ReportsService {
     const where: any = {}
     if (from || to) {
       where.timestamp = {}
-      if (from) where.timestamp.gte = new Date(from)
-      if (to) where.timestamp.lte = new Date(to)
+      if (from) {
+        where.timestamp.gte = new Date(from)
+      }
+      if (to) {
+        where.timestamp.lte = new Date(to)
+      }
     }
-    if (campaignId) where.campaignId = campaignId
-    if (currency) where.currency = currency
+    if (campaignId) {
+      where.campaignId = campaignId
+    }
+    if (currency) {
+      where.currency = currency
+    }
     // RevenueEvent не содержит source, поэтому фильтруем по campaignId только если нужно
     // Для source фильтрация по связанным Event (если потребуется)
 
@@ -121,18 +143,36 @@ export class ReportsService {
     const where: any = {}
     if (filter.from || filter.to) {
       where.AND = where.AND || []
-      if (filter.from) where.AND.push({ createdAt: { gte: filter.from } })
-      if (filter.to) where.AND.push({ createdAt: { lte: filter.to } })
+      if (filter.from) {
+        where.AND.push({ createdAt: { gte: filter.from } })
+      }
+      if (filter.to) {
+        where.AND.push({ createdAt: { lte: filter.to } })
+      }
     }
-    if (filter.source) where.source = filter.source
-    if (filter.age) where.age = filter.age
-    if (filter.gender) where.gender = filter.gender
-    if (filter.followersMin !== undefined) where.followers = { ...where.followers, gte: filter.followersMin }
-    if (filter.followersMax !== undefined) where.followers = { ...where.followers, lte: filter.followersMax }
+    if (filter.source) {
+      where.source = filter.source
+    }
+    if (filter.age) {
+      where.age = filter.age
+    }
+    if (filter.gender) {
+      where.gender = filter.gender
+    }
+    if (filter.followersMin !== undefined) {
+      where.followers = { ...where.followers, gte: filter.followersMin }
+    }
+    if (filter.followersMax !== undefined) {
+      where.followers = { ...where.followers, lte: filter.followersMax }
+    }
     if (filter.locationCountry || filter.locationCity) {
       where.location = {}
-      if (filter.locationCountry) where.location.country = filter.locationCountry
-      if (filter.locationCity) where.location.city = filter.locationCity
+      if (filter.locationCountry) {
+        where.location.country = filter.locationCountry
+      }
+      if (filter.locationCity) {
+        where.location.city = filter.locationCity
+      }
     }
 
     let groupBy: Array<'age' | 'gender' | 'location' | 'followers' | 'source'> = []
