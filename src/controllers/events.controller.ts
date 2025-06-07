@@ -35,7 +35,10 @@ export class EventsController {
       return result
     } catch (error) {
       // Only increment metrics for non-validation errors (validation errors are already tracked in the service)
-      if (!(error instanceof BadRequestException)) {
+      const isNatsPublishError =
+        error instanceof HttpException &&
+        error.message === 'Failed to publish event to NATS'
+      if (!(error instanceof BadRequestException) && !isNatsPublishError) {
         this.metrics.incrementFailed(error.message || 'Unknown error')
       }
       
