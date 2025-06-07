@@ -1,6 +1,4 @@
 import { NatsConsumer } from '../nats.consumer'
-import { EventValidationService } from '../../../services/event-validation.service'
-import { EventPersistenceService } from '../../../services/event-persistence.service'
 
 describe('NatsConsumer', () => {
   let consumer: NatsConsumer
