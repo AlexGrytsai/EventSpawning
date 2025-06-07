@@ -54,4 +54,5 @@ model Demographics {
   gender       String?
   location     Json?
   followers    Int?
+  source       String
 } 
