@@ -4,4 +4,5 @@ COPY package*.json ./
 RUN npm ci --omit=dev
 COPY . .
 RUN npm run build
+USER non-root
 CMD ["node", "dist/main.js"] 
