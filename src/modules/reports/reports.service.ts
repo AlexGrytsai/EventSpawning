@@ -88,10 +88,10 @@ export class ReportsService {
     if (currency) {
       where.currency = currency
     }
-    // RevenueEvent не содержит source, поэтому фильтруем по campaignId только если нужно
-    // Для source фильтрация по связанным Event (если потребуется)
+    // RevenueEvent does not contain source, so we filter by campaignId only if needed
+    // For source filtering by related Events (if needed)
 
-    // Получаем все группы для пагинации
+    // Get all groups for pagination
     const allGroups = await this.prisma.revenueEvent.groupBy({
       by: ['campaignId', 'currency'],
       where,
@@ -100,7 +100,7 @@ export class ReportsService {
       orderBy: [{ campaignId: 'asc' }],
     })
 
-    // Фильтрация по source (если задан) через связанные Event
+    // Filtering by source (if specified) using related Event
     let filteredGroups = allGroups
     if (source) {
       // Получаем campaignId, которые соответствуют source через Event
