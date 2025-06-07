@@ -1,6 +1,6 @@
 import { Injectable, Optional } from '@nestjs/common'
 import { HealthService } from '../health/health.service'
-import { EventsService } from '../modules/events/event.service'
+import { EventsService } from '../modules/events/services/event.service'
 import { PrismaService } from './prisma.service'
 import { NatsPublisher } from '../modules/nats/nats.publisher'
 

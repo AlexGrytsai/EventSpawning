@@ -5,7 +5,7 @@ import { ShutdownService } from '../shutdown.service'
 import { HealthService } from '../../health/health.service'
 import { PrismaService } from '../prisma.service'
 import { NatsPublisher } from '../../modules/nats/nats.publisher'
-import { EventsService } from '../../modules/events/event.service'
+import { EventsService } from '../../modules/events/services/event.service'
 
 class MockHealthService {
   setReadiness = jest.fn()

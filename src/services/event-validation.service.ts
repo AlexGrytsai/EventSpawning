@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common'
-import { EventSchema } from '../modules/events/event.zod'
+import { EventSchema } from '../modules/events/dto/event.zod'
 
 @Injectable()
 export class EventValidationService {

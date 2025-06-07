@@ -1,4 +1,4 @@
-import { EventsController } from '../events.controller';
+import { EventsController } from '../../modules/events/controllers/events.controller';
 import { LoggerService } from '../../services/logger.service';
 import { MetricsService } from '../../modules/metrics/services/metrics.service';
 import { register } from 'prom-client';
