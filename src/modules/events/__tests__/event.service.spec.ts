@@ -20,12 +20,17 @@ describe('EventsService', () => {
   let metricsService: MetricsService;
   let loggerService: LoggerService;
   let prisma: { event: { create: jest.Mock } };
+  let correlationIdService: { runWithId: (id: string, fn: any) => any; getId: () => string };
 
   beforeEach(() => {
     register.clear();
     natsPublisher = { publish: jest.fn() };
     metricsService = new MetricsService() as any;
-    loggerService = new LoggerService({ get: jest.fn() } as any);
+    correlationIdService = {
+      runWithId: (_id: string, fn: any) => fn(),
+      getId: jest.fn().mockReturnValue('test-cid'),
+    };
+    loggerService = new LoggerService({ get: jest.fn() } as any, correlationIdService as any);
     prisma = { event: { create: jest.fn() } };
     jest.spyOn(metricsService, 'incrementAccepted').mockImplementation(jest.fn());
     jest.spyOn(metricsService, 'incrementFailed').mockImplementation(jest.fn());
@@ -33,7 +38,7 @@ describe('EventsService', () => {
     jest.spyOn(loggerService, 'logInfo').mockImplementation(jest.fn());
     jest.spyOn(loggerService, 'logEvent').mockImplementation(jest.fn());
     jest.spyOn(loggerService, 'logError').mockImplementation(jest.fn());
-    service = new EventsService(loggerService, natsPublisher as any, metricsService, prisma as any);
+    service = new EventsService(loggerService, natsPublisher as any, metricsService, prisma as any, correlationIdService as any);
   });
 
   it('should process event successfully', async () => {
@@ -110,10 +115,11 @@ describe('EventsService', () => {
       eventType: 'video.view',
       data: { user: { userId: 'u2', username: 'test2', followers: 200 }, engagement: { watchTime: 20, percentageWatched: 100, device: 'iOS', country: 'RU', videoId: 'v2' } }
     };
+    correlationIdService.getId = jest.fn().mockReturnValue('test-cid');
     const result = await service.processEvent(validPayload);
     expect(natsPublisher.publish).toHaveBeenCalled();
     expect(result.correlationId).toBeDefined();
-    expect(loggerService.logEvent).toHaveBeenCalledWith('Event received', expect.objectContaining({ correlationId: result.correlationId }));
+    expect(loggerService.logEvent).toHaveBeenCalledWith('Event received', expect.objectContaining({ eventType: 'video.view', source: 'tiktok', correlationId: 'test-cid' }));
   });
 
   it('should return alreadyProcessed: true if eventId already exists', async () => {
