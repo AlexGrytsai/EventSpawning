@@ -1,4 +1,4 @@
-import { ReportsService } from '../reports.service'
+import { ReportsService } from '../services/reports.service'
 import { PrismaService } from '../../../services/prisma.service'
 import { LoggerService } from '../../../services/logger.service'
 import { MetricsService } from '../../metrics/metrics.service'
