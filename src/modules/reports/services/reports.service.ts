@@ -1,5 +1,4 @@
 import { Injectable } from '@nestjs/common'
-import { PrismaClient } from '@prisma/client'
 import { EventsReportFilter } from '../dto/events-report-filter.dto'
 import { PrismaService } from '../../../services/prisma.service'
 import { LoggerService } from '../../../services/logger.service'
