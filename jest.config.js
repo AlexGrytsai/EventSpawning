@@ -8,4 +8,6 @@ module.exports = {
   transform: {
     ...tsJestTransformCfg,
   },
+  rootDir: './',
+  moduleDirectories: ['node_modules', 'src'],
 };
