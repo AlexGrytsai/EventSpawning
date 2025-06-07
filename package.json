@@ -17,6 +17,7 @@
   "private": true,
   "dependencies": {
     "@nestjs/config": "^4.0.2",
+    "@nestjs/common": "^11.1.2",
     "@nestjs/core": "^11.1.2",
     "@nestjs/platform-express": "^11.1.2",
     "@nestjs/terminus": "^11.0.0",
@@ -30,7 +31,6 @@
   },
   "devDependencies": {
     "@istanbuljs/nyc-config-typescript": "^1.0.2",
-    "@nestjs/common": "^11.1.2",
     "@nestjs/testing": "^11.1.2",
     "@types/express": "^5.0.2",
     "@types/jest": "^29.5.14",
