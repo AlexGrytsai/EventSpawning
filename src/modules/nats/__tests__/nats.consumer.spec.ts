@@ -1,16 +1,22 @@
 import { NatsConsumer } from '../nats.consumer'
+import { EventValidationService } from '../../../services/event-validation.service'
+import { EventPersistenceService } from '../../../services/event-persistence.service'
 
 describe('NatsConsumer', () => {
   let consumer: NatsConsumer
   let js: any
   let logger: any
   let correlationIdService: any
+  let eventValidationService: any
+  let eventPersistenceService: any
 
   beforeEach(() => {
     js = { subscribe: jest.fn() }
     logger = { logEvent: jest.fn(), logError: jest.fn() }
     correlationIdService = { runWithId: (_id: string, fn: any) => fn(), getId: jest.fn().mockReturnValue('test-cid') }
-    consumer = new NatsConsumer(js, logger, correlationIdService)
+    eventValidationService = { validate: jest.fn().mockImplementation(e => e) }
+    eventPersistenceService = { saveEvent: jest.fn().mockResolvedValue(undefined) }
+    consumer = new NatsConsumer(js, logger, correlationIdService, eventValidationService, eventPersistenceService)
   })
 
   it('should use correlation ID from headers', async () => {
