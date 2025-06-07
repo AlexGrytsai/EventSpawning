@@ -19,10 +19,6 @@ describe('ShutdownService', () => {
     prisma = { onModuleDestroy: jest.fn().mockResolvedValue(undefined) }
     nats = { onModuleDestroy: jest.fn().mockResolvedValue(undefined) }
     jest.clearAllMocks()
-    jest.spyOn(health, 'setReadiness')
-    jest.spyOn(events, 'awaitAllTasksDone')
-    jest.spyOn(prisma, 'onModuleDestroy')
-    jest.spyOn(nats, 'onModuleDestroy')
   })
 
   it('should shutdown gracefully', async () => {
