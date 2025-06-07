@@ -58,6 +58,8 @@ services:
       - DATABASE_URL=${DATABASE_URL}
       - LOG_LEVEL=${LOG_LEVEL:-info}
     depends_on:
+      migrate:
+        condition: service_completed_successfully
       nats:
         condition: service_healthy
       postgres:
@@ -78,6 +80,8 @@ services:
       - DATABASE_URL=${DATABASE_URL}
       - LOG_LEVEL=${LOG_LEVEL:-info}
     depends_on:
+      migrate:
+        condition: service_completed_successfully
       nats:
         condition: service_healthy
       postgres:
@@ -99,6 +103,8 @@ services:
     ports:
       - 4000:4000
     depends_on:
+      migrate:
+        condition: service_completed_successfully
       postgres:
         condition: service_healthy
     healthcheck:
@@ -168,6 +174,18 @@ services:
       timeout: 5s
       retries: 5
       start_period: 30s
+
+  migrate:
+    image: node:18-alpine
+    working_dir: /app
+    volumes:
+      - ./:/app
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+    command: sh -c "npm ci || npm install && npx prisma migrate deploy --schema=prisma/schema.prisma"
+    depends_on:
+      postgres:
+        condition: service_healthy
 
 volumes:
   pgdata:
