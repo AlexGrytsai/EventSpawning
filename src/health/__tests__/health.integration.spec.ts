@@ -4,6 +4,7 @@ import * as request from 'supertest'
 import { HealthController } from '../health.controller'
 import { HealthService } from '../health.service'
 import { ConfigService } from '../../services/config.service'
+import { PrismaService } from '../../services/prisma.service'
 
 describe('Health endpoints integration', () => {
   let app: INestApplication
@@ -14,17 +15,22 @@ describe('Health endpoints integration', () => {
   }
 
   beforeEach(async () => {
+    const mockHealthService: Partial<HealthService> = {
+      checkLiveness: jest.fn().mockResolvedValue(true),
+      checkReadiness: jest.fn().mockResolvedValue({
+        isReady: true,
+        checks: [{ name: 'db', status: 'ok' }]
+      })
+    }
+    const mockPrismaService: Partial<PrismaService> = {
+      $queryRaw: jest.fn().mockResolvedValue(1)
+    }
     const moduleRef: TestingModule = await Test.createTestingModule({
       controllers: [HealthController],
       providers: [
-        {
-          provide: HealthService,
-          useValue: {
-            checkLiveness: jest.fn().mockResolvedValue(true),
-            checkReadiness: jest.fn().mockResolvedValue({ isReady: true, checks: [] })
-          }
-        },
-        { provide: ConfigService, useValue: mockConfigService }
+        { provide: HealthService, useValue: mockHealthService },
+        { provide: ConfigService, useValue: mockConfigService },
+        { provide: PrismaService, useValue: mockPrismaService }
       ]
     }).compile()
     app = moduleRef.createNestApplication()
