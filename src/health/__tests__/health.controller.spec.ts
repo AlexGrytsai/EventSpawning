@@ -26,7 +26,8 @@ describe('HealthController', () => {
       checkReadiness: jest.fn<() => Promise<ReadinessResult>>().mockResolvedValue({
         isReady: true,
         checks: [{ name: 'db', status: 'ok' }]
-      })
+      }),
+      isShuttingDownNow: jest.fn<() => boolean>().mockReturnValue(false)
     }
     const mockPrismaService: Partial<PrismaService> = {
       $queryRaw: jest.fn<any>().mockImplementation(() => Promise.resolve(1))
