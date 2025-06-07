@@ -1,4 +1,4 @@
-import { NatsHealthIndicator } from '../indicators/nats.health-indicator';
+import { NatsHealthIndicator } from '../../src/modules/health/indicators/nats.health-indicator';
 
 describe('NatsHealthIndicator', () => {
   let indicator: NatsHealthIndicator;

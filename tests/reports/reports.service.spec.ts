@@ -1,7 +1,7 @@
-import { ReportsService } from '../services/reports.service'
-import { PrismaService } from '../../../common/services/prisma.service'
-import { LoggerService } from '../../../common/services/logger.service'
-import { MetricsService } from '../../metrics/services/metrics.service'
+import { ReportsService } from '../../src/modules/reports/services/reports.service'
+import { PrismaService } from '../../src/common/services/prisma.service'
+import { LoggerService } from '../../src/common/services/logger.service'
+import { MetricsService } from '../../src/modules/metrics/services/metrics.service'
 
 describe('ReportsService - getRevenueReport', () => {
   let service: ReportsService

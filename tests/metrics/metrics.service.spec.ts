@@ -1,4 +1,4 @@
-import { MetricsService } from '../services/metrics.service';
+import { MetricsService } from '../../src/modules/metrics/services/metrics.service';
 import { register } from 'prom-client';
 
 describe('MetricsService', () => {

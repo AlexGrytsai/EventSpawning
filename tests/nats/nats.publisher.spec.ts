@@ -1,4 +1,4 @@
-import { NatsPublisher } from '../services/nats.publisher';
+import { NatsPublisher } from '../../src/modules/nats/services/nats.publisher';
 
 describe('NatsPublisher', () => {
   let publisher: NatsPublisher;
