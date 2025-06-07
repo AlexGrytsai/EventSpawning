@@ -56,6 +56,14 @@ export class HealthController {
    */
   async readiness(@Res() res: Response) {
     const service = this.getServiceName()
+    if (this.healthService.isShuttingDownNow()) {
+      res.status(HttpStatus.SERVICE_UNAVAILABLE).json({
+        status: 'error',
+        service,
+        checks: []
+      })
+      return
+    }
     try {
       await this.prisma.$queryRaw`SELECT 1`
       const readiness = await this.healthService.checkReadiness()
