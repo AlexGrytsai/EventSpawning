@@ -1,5 +1,5 @@
 import { Injectable, Inject } from '@nestjs/common'
-import { JetStreamClient, consumerOpts, StringCodec, headers } from 'nats'
+import { JetStreamClient, consumerOpts, StringCodec } from 'nats'
 import { v4 as uuidv4 } from 'uuid'
 import { LoggerService } from '../../services/logger.service'
 

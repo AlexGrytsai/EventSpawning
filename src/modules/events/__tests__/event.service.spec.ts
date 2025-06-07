@@ -2,8 +2,6 @@ import { EventsService } from '../event.service';
 import { LoggerService } from '../../../services/logger.service';
 import { MetricsService } from '../../metrics/metrics.service';
 import { register } from 'prom-client';
-import { Prisma } from '@prisma/client'
-import { PrismaService } from '../../../services/prisma.service'
 
 class MockPrismaClientKnownRequestError extends Error {
   code: string;
