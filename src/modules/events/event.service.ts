@@ -32,13 +32,12 @@ export class EventsService {
    */
   async processEvent(eventPayload: unknown, correlationId?: string) {
     this.activeTasks++
+    const start = Date.now()
     try {
       const id = correlationId || uuidv4()
-      const start = Date.now()
       const result = EventSchema.safeParse(eventPayload)
       if (!result.success) {
         this.logger.logError('Validation failed', { correlationId: id, errors: result.error.errors })
-        // Increment a fixed metric label to avoid high-cardinality
         this.metrics.incrementFailed('validation_failed')
         throw new BadRequestException({ 
           message: 'Validation error', 
@@ -47,11 +46,22 @@ export class EventsService {
       }
       const event = result.data
       this.logger.logEvent('Event received', { correlationId: id, eventType: event.eventType, source: event.source })
-      await this.nats.publish(event.source, event, id)
+      try {
+        await this.nats.publish(event.source, event, id)
+      } catch (err) {
+        this.metrics.incrementFailed('publish_failed')
+        this.logger.logError('Publish failed', {
+          correlationId: id,
+          error: err instanceof Error ? err.message : err,
+          errorStack: err instanceof Error && err.stack ? err.stack : undefined,
+          errorObject: err
+        })
+        throw err
+      }
       this.metrics.incrementAccepted(event.source, event.funnelStage, event.eventType)
-      this.metrics.observeProcessingTime(Date.now() - start)
       return { success: true, correlationId: id }
     } finally {
+      this.metrics.observeProcessingTime(Date.now() - start)
       this.activeTasks--
       if (this.activeTasks === 0 && this.allTasksDoneResolver) {
         this.allTasksDoneResolver()
