@@ -86,4 +86,20 @@ describe('EventsService', () => {
     expect(metricsService.incrementFailed).toHaveBeenCalled();
     expect(loggerService.logError).toHaveBeenCalled();
   });
+
+  it('should generate correlation ID if not provided', async () => {
+    natsPublisher.publish.mockResolvedValueOnce({ success: true, correlationId: 'auto-id', subject: 'test', seq: 1 });
+    const validPayload = {
+      eventId: '2',
+      timestamp: new Date().toISOString(),
+      source: 'tiktok',
+      funnelStage: 'top',
+      eventType: 'video.view',
+      data: { user: { userId: 'u2', username: 'test2', followers: 200 }, engagement: { watchTime: 20, percentageWatched: 100, device: 'iOS', country: 'RU', videoId: 'v2' } }
+    };
+    const result = await service.processEvent(validPayload);
+    expect(natsPublisher.publish).toHaveBeenCalled();
+    expect(result.correlationId).toBeDefined();
+    expect(loggerService.logEvent).toHaveBeenCalledWith('Event received', expect.objectContaining({ correlationId: result.correlationId }));
+  });
 }); 
