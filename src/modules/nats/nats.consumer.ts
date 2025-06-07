@@ -3,13 +3,17 @@ import { JetStreamClient, consumerOpts, StringCodec } from 'nats'
 import { v4 as uuidv4 } from 'uuid'
 import { LoggerService } from '../../services/logger.service'
 import { CorrelationIdService } from '../../services/correlation-id.service'
+import { EventValidationService } from '../../services/event-validation.service'
+import { EventPersistenceService } from '../../services/event-persistence.service'
 
 @Injectable()
 export class NatsConsumer {
   constructor(
     @Inject('NATS_JS') private readonly js: JetStreamClient,
     private readonly logger: LoggerService,
-    private readonly correlationIdService: CorrelationIdService
+    private readonly correlationIdService: CorrelationIdService,
+    private readonly eventValidationService: EventValidationService,
+    private readonly eventPersistenceService: EventPersistenceService
   ) {}
 
   async subscribe(subject: string, durable: string) {
@@ -23,7 +27,7 @@ export class NatsConsumer {
     for await (const m of sub) {
       const hdrs = m.headers
       let correlationId = hdrs?.get('x-correlation-id') ?? this.correlationIdService.getId() ?? uuidv4()
-      this.correlationIdService.runWithId(correlationId, () => {
+      this.correlationIdService.runWithId(correlationId, async () => {
         let event
         try {
           event = JSON.parse(sc.decode(m.data))
@@ -33,7 +37,15 @@ export class NatsConsumer {
           return
         }
         this.logger.logEvent('Event received', { eventType: event.eventType, source: event.source, correlationId })
-        // ... event processing logic ...
+        try {
+          const validated = this.eventValidationService.validate(event)
+          await this.eventPersistenceService.saveEvent(validated)
+          this.logger.logEvent('Event processed', { eventType: validated.eventType, source: validated.source, correlationId })
+        } catch (err) {
+          this.logger.logError('Event processing failed', { error: err, correlationId })
+          m.term()
+          return
+        }
         m.ack()
       })
     }
