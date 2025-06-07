@@ -1,4 +1,4 @@
-jest.mock('../services/prisma.service', () => {
+jest.mock('../../src/common/services/prisma.service', () => {
   return {
     PrismaService: jest.fn().mockImplementation(() => ({
       $connect: jest.fn().mockResolvedValue(undefined),
@@ -9,7 +9,7 @@ jest.mock('../services/prisma.service', () => {
   }
 })
 
-import { PrismaService } from '../services/prisma.service'
+import { PrismaService } from '../../src/common/services/prisma.service'
 
 describe('Persistence integration', () => {
   it('data remains after simulated restart', async () => {
