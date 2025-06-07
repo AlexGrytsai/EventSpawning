@@ -5,7 +5,7 @@ import { EventsReportFilterDto } from '../dto/events-report-filter.dto'
 import { DemographicsReportFilterSchema } from '../../../reporter/dto/demographics-report-filter.dto'
 import { LoggerService } from '../../../services/logger.service'
 import { MetricsService } from '../../metrics/services/metrics.service'
-import { HttpExceptionFilter } from '../../../controllers/http-exception.filter'
+import { HttpExceptionFilter } from '../../../common/filters/http-exception.filter'
 import { v4 as uuidv4 } from 'uuid'
 
 @Controller('reports')
