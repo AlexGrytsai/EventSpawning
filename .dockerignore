@@ -12,4 +12,5 @@ coverage
 *.log
 .vscode
 .idea
-*.md 
+*.md
+tests
