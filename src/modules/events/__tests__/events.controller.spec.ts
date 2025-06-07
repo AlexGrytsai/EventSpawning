@@ -1,8 +1,8 @@
-import { EventsController } from '../../modules/events/controllers/events.controller';
-import { LoggerService } from '../../services/logger.service';
-import { MetricsService } from '../../modules/metrics/services/metrics.service';
+import { EventsController } from '../controllers/events.controller';
+import { LoggerService } from '../../../services/logger.service';
+import { MetricsService } from '../../metrics/services/metrics.service';
 import { register } from 'prom-client';
-import { HealthService } from '../../modules/health/services/health.service';
+import { HealthService } from '../../health/services/health.service';
 
 describe('EventsController', () => {
   let controller: EventsController;
