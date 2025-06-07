@@ -4,7 +4,7 @@
 
 - **gateway** — receives webhook events from publisher via HTTP, validates, adds correlation ID, publishes events to the appropriate NATS JetStream topics.
 - **fb-collector** — subscribes to Facebook event topics in NATS, processes, normalizes, and stores them in the database.
-- **ttk-collector** — subscribes to Tiktok event topics in NATS, processes, normalizes, and stores them in the database.
+- **ttk-collector** — subscribes to TikTok event topics in NATS, processes, normalizes, and stores them in the database.
 - **reporter** — provides an API for generating aggregated reports on events, revenue, and demographics, aggregates data from the database.
 - **publisher** — external service (docker image), sends webhook events to gateway.
 - **prometheus** — collects metrics from all services (via /metrics endpoints).
@@ -14,7 +14,7 @@
 ### 1.2 Interaction Flows
 
 1. publisher sends a webhook to gateway (HTTP, EVENT_ENDPOINT).
-2. gateway validates, adds correlation ID, publishes the event to NATS JetStream (separate topics for Facebook and Tiktok).
+2. gateway validates, adds correlation ID, publishes the event to NATS JetStream (separate topics for Facebook and TikTok).
 3. collectors (fb-collector, ttk-collector) are subscribed to their topics, process events, and store them in PostgreSQL.
 4. reporter aggregates data from the database and provides an API for reports.
 5. prometheus collects metrics from all services.
@@ -55,12 +55,12 @@ flowchart TD
 - gateway and collectors are implemented as stateless services: they do not store state between requests, all data and events are stored in external systems (NATS, PostgreSQL).
 - Scaling is achieved by increasing the number of service replicas (replica count) via docker-compose (scale) or in Kubernetes (Deployment replicas).
 - Each gateway instance can receive events in parallel, load balancing is provided by an external load balancer or round-robin DNS.
-- collectors are scaled independently for Facebook and Tiktok streams, allowing flexible resource allocation depending on the load for each source.
+- collectors are scaled independently for Facebook and TikTok streams, allowing flexible resource allocation depending on the load for each source.
 
 #### Fault Tolerance
 
 - Persistent volumes are used for PostgreSQL and NATS: data is stored outside containers, ensuring data safety during container restarts or failures.
-- NATS JetStream supports message durability and ack/retry mechanics: events are not lost if collectors fail, at-least-once delivery is guaranteed.
+- NATS JetStream supports message durability and ack/retry mechanics: events are not lost if collectors fail, at-least-once-delivery is guaranteed.
 - collectors and gateway use idempotency when processing events: reprocessing the same event does not lead to data duplication.
 - All services implement readiness and liveness endpoints: the orchestrator (docker-compose or Kubernetes) monitors service health and restarts them in case of failures.
 - On shutdown, services process all "in-flight" events (graceful shutdown): they stop accepting new events and finish processing current ones.
@@ -79,7 +79,7 @@ flowchart TD
 
 #### Delivery Guarantee and Fault Tolerance
 
-- At-least-once delivery is used for events: JetStream guarantees delivery until processing is confirmed.
+- "At-least-once" delivery is used for events: JetStream guarantees delivery until processing is confirmed.
 - Idempotency logic in collectors prevents duplication on redelivery.
 - Stateless service design allows quick replacement or scaling of instances without data loss.
 - The orchestrator monitors service health and automatically restarts them in case of failures.
