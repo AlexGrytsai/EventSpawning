@@ -4,6 +4,8 @@ import { EventSchema } from './event.zod'
 import { LoggerService } from '../../services/logger.service'
 import { NatsPublisher } from '../nats/nats.publisher'
 import { MetricsService } from '../metrics/metrics.service'
+import { PrismaService } from '../../services/prisma.service'
+import { Prisma } from '@prisma/client'
 
 @Injectable()
 /**
@@ -19,7 +21,8 @@ export class EventsService {
   constructor(
     private readonly logger: LoggerService,
     private readonly nats: NatsPublisher,
-    private readonly metrics: MetricsService
+    private readonly metrics: MetricsService,
+    private readonly prisma: PrismaService
   ) {}
 
   /**
@@ -46,6 +49,34 @@ export class EventsService {
       }
       const event = result.data
       this.logger.logEvent('Event received', { correlationId: id, eventType: event.eventType, source: event.source })
+      try {
+        await this.prisma.event.create({
+          data: {
+            id: uuidv4(),
+            eventId: event.eventId,
+            timestamp: new Date(event.timestamp),
+            source: event.source,
+            funnelStage: event.funnelStage,
+            eventType: event.eventType,
+            userId: event.data?.user?.userId ?? null,
+            campaignId: (event.data?.engagement && typeof event.data.engagement === 'object' && 'campaignId' in event.data.engagement)
+              ? event.data.engagement.campaignId
+              : null,
+            engagement: event.data?.engagement ?? null,
+            raw: event,
+          } as any
+        })
+      } catch (err) {
+        if (
+          (err instanceof Prisma.PrismaClientKnownRequestError ||
+            (err && err.name === 'PrismaClientKnownRequestError' && err.code === 'P2002')) &&
+          Array.isArray(err.meta?.target) &&
+          err.meta.target.includes('eventId')
+        ) {
+          return { success: true, alreadyProcessed: true, correlationId: id }
+        }
+        throw err
+      }
       try {
         await this.nats.publish(event.source, event, id)
       } catch (err) {
