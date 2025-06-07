@@ -24,8 +24,16 @@ describe('EventsController', () => {
   it('should handle webhook successfully', async () => {
     eventsService.processEvent.mockResolvedValueOnce({ success: true, correlationId: 'corr-1' });
     await expect(controller.handleWebhook({ type: 'test' }, 'corr-1')).resolves.toEqual({ success: true, correlationId: 'corr-1' });
-    expect(eventsService.processEvent).toHaveBeenCalled();
-    expect(logger.logInfo).toHaveBeenCalled();
+    expect(eventsService.processEvent).toHaveBeenCalledWith({ type: 'test' }, 'corr-1');
+    expect(logger.logInfo).toHaveBeenCalledWith('Webhook processed successfully', { correlationId: 'corr-1' });
+  });
+
+  it('should generate correlation ID if not provided', async () => {
+    eventsService.processEvent.mockResolvedValueOnce({ success: true, correlationId: 'generated-id' });
+    const result = await controller.handleWebhook({ type: 'test' });
+    expect(eventsService.processEvent.mock.calls[0][1]).toBeDefined();
+    expect(result).toEqual({ success: true, correlationId: 'generated-id' });
+    expect(logger.logInfo).toHaveBeenCalledWith('Webhook processed successfully', { correlationId: 'generated-id' });
   });
 
   it('should handle invalid payload', async () => {
