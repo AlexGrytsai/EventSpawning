@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { makeBaseEvent, FunnelStage } from './common'
+import { makeBaseEvent } from './common'
 
 const TiktokEventType = z.enum([
   'video.view', 'like', 'share', 'comment',
