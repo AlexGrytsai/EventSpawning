@@ -175,18 +175,6 @@ services:
       retries: 5
       start_period: 30s
 
-  migrate:
-    image: node:18-alpine
-    working_dir: /app
-    volumes:
-      - ./:/app
-    environment:
-      - DATABASE_URL=${DATABASE_URL}
-    command: sh -c "npm ci || npm install && npx prisma migrate deploy --schema=prisma/schema.prisma"
-    depends_on:
-      postgres:
-        condition: service_healthy
-
 volumes:
   pgdata:
   natsdata:
