@@ -4,6 +4,7 @@ import { LoggerService } from '../services/logger.service'
 import { MetricsService } from '../modules/metrics/metrics.service'
 import { HttpExceptionFilter } from './http-exception.filter'
 import { v4 as uuidv4 } from 'uuid'
+import { HealthService } from '../health/health.service'
 
 @Controller('events')
 @UseFilters(HttpExceptionFilter)
@@ -11,7 +12,8 @@ export class EventsController {
   constructor(
     private readonly eventsService: EventsService,
     private readonly logger: LoggerService,
-    private readonly metrics: MetricsService
+    private readonly metrics: MetricsService,
+    private readonly healthService: HealthService
   ) {}
 
   @Post()
@@ -30,6 +32,12 @@ export class EventsController {
     @Body() eventPayload: unknown,
     @Headers('x-correlation-id') correlationId?: string
   ): Promise<any> {
+    if (this.healthService.isShuttingDownNow()) {
+      throw new HttpException({
+        statusCode: HttpStatus.SERVICE_UNAVAILABLE,
+        message: 'Service is shutting down'
+      }, HttpStatus.SERVICE_UNAVAILABLE)
+    }
     const corrId = correlationId || uuidv4()
     try {
       const result = await this.eventsService.processEvent(eventPayload, corrId)
