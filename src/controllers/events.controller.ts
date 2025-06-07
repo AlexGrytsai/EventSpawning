@@ -3,6 +3,7 @@ import { EventsService } from '../modules/events/event.service'
 import { LoggerService } from '../services/logger.service'
 import { MetricsService } from '../modules/metrics/metrics.service'
 import { HttpExceptionFilter } from './http-exception.filter'
+import { v4 as uuidv4 } from 'uuid'
 
 @Controller('events')
 @UseFilters(HttpExceptionFilter)
@@ -29,8 +30,9 @@ export class EventsController {
     @Body() eventPayload: unknown,
     @Headers('x-correlation-id') correlationId?: string
   ): Promise<any> {
+    const corrId = correlationId || uuidv4()
     try {
-      const result = await this.eventsService.processEvent(eventPayload, correlationId)
+      const result = await this.eventsService.processEvent(eventPayload, corrId)
       this.logger.logInfo('Webhook processed successfully', { correlationId: result.correlationId })
       return result
     } catch (error) {
@@ -43,7 +45,7 @@ export class EventsController {
       }
       
       this.logger.logError('Webhook processing failed', {
-        correlationId: correlationId || 'unknown',
+        correlationId: corrId,
         error: error.message || 'Unknown error'
       })
       
