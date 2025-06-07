@@ -2,7 +2,7 @@ import { EventsController } from '../../modules/events/controllers/events.contro
 import { LoggerService } from '../../services/logger.service';
 import { MetricsService } from '../../modules/metrics/services/metrics.service';
 import { register } from 'prom-client';
-import { HealthService } from '../../health/health.service';
+import { HealthService } from '../../modules/health/services/health.service';
 
 describe('EventsController', () => {
   let controller: EventsController;

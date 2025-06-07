@@ -4,7 +4,7 @@ import { LoggerService } from '../../../services/logger.service'
 import { MetricsService } from '../../metrics/services/metrics.service'
 import { HttpExceptionFilter } from '../../../controllers/http-exception.filter'
 import { v4 as uuidv4 } from 'uuid'
-import { HealthService } from '../../../health/health.service'
+import { HealthService } from '../../health/services/health.service'
 
 @Controller('events')
 @UseFilters(HttpExceptionFilter)

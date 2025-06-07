@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common'
 import { ConfigModule } from '@nestjs/config'
 import { MetricsModule } from './modules/metrics/metrics.module'
-import { HealthModule } from './health/health.module'
+import { HealthModule } from './modules/health/health.module'
 import { CorrelationIdService } from './services/correlation-id.service'
 import { CorrelationIdInterceptor } from './services/correlation-id.interceptor'
 import { APP_INTERCEPTOR } from '@nestjs/core'

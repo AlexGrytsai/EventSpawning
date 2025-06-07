@@ -1,4 +1,4 @@
-import { PostgresHealthIndicator } from '../postgres.health-indicator';
+import { PostgresHealthIndicator } from '../indicators/postgres.health-indicator';
 
 describe('PostgresHealthIndicator', () => {
   let indicator: PostgresHealthIndicator;

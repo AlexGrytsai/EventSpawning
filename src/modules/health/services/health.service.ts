@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common'
-import { NatsHealthIndicator } from './nats.health-indicator'
-import { PostgresHealthIndicator } from './postgres.health-indicator'
-import { LoggerService } from '../services/logger.service'
-import { ConfigService } from '../services/config.service'
+import { NatsHealthIndicator } from '../indicators/nats.health-indicator'
+import { PostgresHealthIndicator } from '../indicators/postgres.health-indicator'
+import { LoggerService } from '../../../services/logger.service'
+import { ConfigService } from '../../../services/config.service'
 
 export interface HealthCheck {
   name: string
