@@ -2,12 +2,14 @@ import { Controller, Get, HttpStatus, Res } from '@nestjs/common'
 import { Response } from 'express'
 import { HealthService } from './health.service'
 import { ConfigService } from '../services/config.service'
+import { PrismaService } from '../services/prisma.service'
 
 @Controller('health')
 export class HealthController {
   constructor(
     private readonly healthService: HealthService,
     private readonly config: ConfigService,
+    private readonly prisma: PrismaService,
   ) {}
 
   /**
@@ -53,21 +55,28 @@ export class HealthController {
    * @param res - The response object from Express.
    */
   async readiness(@Res() res: Response) {
-    const readinessResult = await this.healthService.checkReadiness()
     const service = this.getServiceName()
-    if (readinessResult.isReady) {
-      res.status(HttpStatus.OK).json({
-        status: 'ok',
-        timestamp: new Date().toISOString(),
-        service,
-        checks: readinessResult.checks
-      })
-    } else {
+    try {
+      await this.prisma.$queryRaw`SELECT 1`
+      const readiness = await this.healthService.checkReadiness()
+      if (readiness.isReady) {
+        res.status(HttpStatus.OK).json({
+          status: 'ok',
+          service,
+          checks: readiness.checks
+        })
+      } else {
+        res.status(HttpStatus.SERVICE_UNAVAILABLE).json({
+          status: 'error',
+          service,
+          checks: readiness.checks
+        })
+      }
+    } catch {
       res.status(HttpStatus.SERVICE_UNAVAILABLE).json({
         status: 'error',
-        timestamp: new Date().toISOString(),
         service,
-        checks: readinessResult.checks
+        checks: [{ name: 'db', status: 'error' }]
       })
     }
   }
