@@ -78,4 +78,21 @@ describe('Graceful shutdown (integration, minimal module)', () => {
     expect(prisma.onModuleDestroy).toHaveBeenCalled()
     expect(nats.onModuleDestroy).toHaveBeenCalled()
   })
+
+  it('should wait for in-flight events and reject new events after shutdown started', async () => {
+    let inFlightResolved = false
+    events.awaitAllTasksDone = jest.fn(() => new Promise(resolve => setTimeout(() => { inFlightResolved = true; resolve(undefined) }, 100)))
+    await request(app.getHttpServer()).get('/test').expect(200)
+    const shutdownPromise = shutdownService.shutdown()
+    // Пока in-flight не завершён, shutdown не завершён
+    expect(inFlightResolved).toBe(false)
+    await shutdownPromise
+    expect(inFlightResolved).toBe(true)
+    // После shutdown сервер закрыт
+    await app.close()
+    await request(app.getHttpServer())
+      .get('/test')
+      .then(() => { throw new Error('Server should be closed') })
+      .catch(err => { expect(err).toBeDefined() })
+  })
 }) 
