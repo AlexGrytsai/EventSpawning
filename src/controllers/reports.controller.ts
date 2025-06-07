@@ -21,18 +21,17 @@ export class ReportsController {
     @Headers('x-correlation-id') correlationId?: string
   ) {
     const corrId = correlationId || uuidv4()
-    const end = this.metrics.startTimer('reports_revenue_duration_seconds')
-    this.metrics.increment('reports_revenue_requests_total')
+    const startTime = Date.now()
     try {
       const filters = RevenueReportFilterSchema.parse(query)
-      const result = await this.reportsService.getRevenueReport(filters, corrId)
+      const result = await this.reportsService.getRevenueReport(filters)
       this.logger.logInfo('Revenue report generated', { correlationId: corrId })
-      end()
+      this.metrics.observeProcessingTime(Date.now() - startTime)
       return result
     } catch (error) {
-      this.metrics.increment('reports_revenue_failed_total')
+      this.metrics.incrementFailed(error.message)
       this.logger.logError('Revenue report error', { correlationId: corrId, error: error.message })
-      end()
+      this.metrics.observeProcessingTime(Date.now() - startTime)
       throw new HttpException({
         statusCode: HttpStatus.BAD_REQUEST,
         message: error.message
