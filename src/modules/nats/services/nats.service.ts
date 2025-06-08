@@ -2,8 +2,11 @@ import { Module } from '@nestjs/common'
 import { ConfigService } from '../../../common/services/config.service'
 import { NatsPublisher } from './nats.publisher'
 import { connect } from 'nats'
+import { LoggerModule } from '../../../common/services/logger.module'
+import { MetricsModule } from '../../metrics/metrics.module'
 
 @Module({
+  imports: [LoggerModule, MetricsModule],
   providers: [
     NatsPublisher,
     ConfigService,

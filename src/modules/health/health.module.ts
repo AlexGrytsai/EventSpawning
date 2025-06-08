@@ -7,14 +7,14 @@ import { PrismaService } from '../../common/services/prisma.service'
 import { NatsHealthIndicator } from './indicators/nats.health-indicator'
 import { NatsService } from '../nats/services/nats.service'
 import { ConfigService } from '../../common/services/config.service'
+import { LoggerModule } from '../../common/services/logger.module'
 
 @Module({
-  imports: [NatsService],
+  imports: [NatsService, LoggerModule],
   controllers: [HealthController],
   providers: [
     HealthService,
     NatsHealthIndicator,
-    LoggerService,
     PostgresHealthIndicator,
     PrismaService,
     ConfigService,
