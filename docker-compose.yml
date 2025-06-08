@@ -56,9 +56,10 @@ services:
       context: .
       dockerfile: src/infrastructure/docker/fb-collector.Dockerfile
     environment:
+      - EVENT_ENDPOINT=${EVENT_ENDPOINT}
       - NATS_URL=${NATS_URL}
-      - DATABASE_URL=${DATABASE_URL}
       - LOG_LEVEL=${LOG_LEVEL:-info}
+      - DATABASE_URL=${DATABASE_URL}
     command: sh -c "npx prisma migrate deploy && npx prisma generate && node dist/main.js"
     depends_on:
       nats:
@@ -77,9 +78,10 @@ services:
       context: .
       dockerfile: src/infrastructure/docker/ttk-collector.Dockerfile
     environment:
+      - EVENT_ENDPOINT=${EVENT_ENDPOINT}
       - NATS_URL=${NATS_URL}
-      - DATABASE_URL=${DATABASE_URL}
       - LOG_LEVEL=${LOG_LEVEL:-info}
+      - DATABASE_URL=${DATABASE_URL}
     depends_on:
       nats:
         condition: service_healthy
@@ -98,8 +100,10 @@ services:
       context: .
       dockerfile: src/infrastructure/docker/reporter.Dockerfile
     environment:
-      - DATABASE_URL=${DATABASE_URL}
+      - EVENT_ENDPOINT=${EVENT_ENDPOINT}
+      - NATS_URL=${NATS_URL}
       - LOG_LEVEL=${LOG_LEVEL:-info}
+      - DATABASE_URL=${DATABASE_URL}
     command: sh -c "npx prisma migrate deploy && npx prisma generate && node dist/main.js"
     ports:
       - 4000:4000
