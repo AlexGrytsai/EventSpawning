@@ -117,4 +117,20 @@ export class EventsService {
     }
     return this.allTasksDonePromise
   }
+
+  async processEvents(eventPayloads: unknown[], correlationId?: string) {
+    const results: Array<
+      { success: boolean; correlationId: string; alreadyProcessed?: boolean } |
+      { success: false; error: any; correlationId?: string }
+    > = []
+    for (const payload of eventPayloads) {
+      try {
+        const result = await this.processEvent(payload, correlationId)
+        results.push(result)
+      } catch (error) {
+        results.push({ success: false, error: error.message, correlationId })
+      }
+    }
+    return results
+  }
 }
