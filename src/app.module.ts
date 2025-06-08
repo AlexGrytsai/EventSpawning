@@ -8,6 +8,7 @@ import { APP_INTERCEPTOR } from '@nestjs/core'
 import { ShutdownService } from './common/services/shutdown.service'
 import { PrismaModule } from './common/services/prisma.module'
 import { NatsModule } from './modules/nats/nats.module'
+import { EventsModule } from './modules/events/events.module'
 
 @Module({
     imports: [
@@ -21,6 +22,7 @@ import { NatsModule } from './modules/nats/nats.module'
         HealthModule,
         PrismaModule,
         NatsModule,
+        EventsModule,
     ],
     providers: [
         CorrelationIdService,
