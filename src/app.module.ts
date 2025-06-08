@@ -7,6 +7,7 @@ import { CorrelationIdInterceptor } from './common/interceptors/correlation-id.i
 import { APP_INTERCEPTOR } from '@nestjs/core'
 import { ShutdownService } from './common/services/shutdown.service'
 import { PrismaModule } from './common/services/prisma.module'
+import { NatsModule } from './modules/nats/nats.module'
 
 @Module({
     imports: [
@@ -19,6 +20,7 @@ import { PrismaModule } from './common/services/prisma.module'
         MetricsModule,
         HealthModule,
         PrismaModule,
+        NatsModule,
     ],
     providers: [
         CorrelationIdService,
