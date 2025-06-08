@@ -2,9 +2,12 @@ import { NestFactory } from '@nestjs/core'
 import { AppModule } from './app.module'
 import { ShutdownService } from './common/services/shutdown.service'
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger'
+import { json, urlencoded } from 'express'
 
 async function bootstrap() {
     const app = await NestFactory.create(AppModule)
+    app.use(json({ limit: '50mb' }))
+    app.use(urlencoded({ limit: '50mb', extended: true }))
     const server = app.getHttpAdapter().getInstance()
     const config = new DocumentBuilder()
         .setTitle('Event Spawning API')
