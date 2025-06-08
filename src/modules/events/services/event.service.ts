@@ -5,7 +5,6 @@ import { LoggerService } from '../../../common/services/logger.service'
 import { NatsPublisher } from '../../nats/services/nats.publisher'
 import { MetricsService } from '../../metrics/services/metrics.service'
 import { PrismaService } from '../../../common/services/prisma.service'
-import { Prisma } from '@prisma/client'
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library'
 import { CorrelationIdService } from '../../../common/services/correlation-id.service'
 
