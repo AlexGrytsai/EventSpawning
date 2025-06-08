@@ -52,6 +52,8 @@ services:
         condition: service_healthy
       postgres:
         condition: service_healthy
+    volumes:
+      - gatewaydata:/data
 
   fb-collector:
     build:
@@ -194,4 +196,5 @@ volumes:
   pgdata:
   natsdata:
   prometheusdata:
-  grafanadata: 
+  grafanadata:
+  gatewaydata: 
