@@ -6,4 +6,5 @@ RUN npm ci --omit=dev
 COPY prisma ./prisma
 COPY src ./src
 RUN npm run build
+RUN adduser --disabled-password --gecos '' non-root
 USER non-root
