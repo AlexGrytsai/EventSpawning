@@ -38,7 +38,7 @@ services:
       - DATABASE_URL=${DATABASE_URL}
     ports:
       - 3000:3000
-    command: sh -c "npx prisma migrate deploy && nest start"
+    command: sh -c "npx prisma migrate deploy && npx prisma generate && node dist/main.js"
     healthcheck:
       test: ["CMD", "sh", "-c", "curl -f http://localhost:3000/health/live && curl -f http://localhost:3000/health/ready"]
       interval: 10s
@@ -59,7 +59,7 @@ services:
       - NATS_URL=${NATS_URL}
       - DATABASE_URL=${DATABASE_URL}
       - LOG_LEVEL=${LOG_LEVEL:-info}
-    command: sh -c "npx prisma migrate deploy && nest start"
+    command: sh -c "npx prisma migrate deploy && npx prisma generate && node dist/main.js"
     depends_on:
       nats:
         condition: service_healthy
@@ -85,7 +85,7 @@ services:
         condition: service_healthy
       postgres:
         condition: service_healthy
-    command: sh -c "npx prisma migrate deploy && nest start"
+    command: sh -c "npx prisma migrate deploy && npx prisma generate && node dist/main.js"
     healthcheck:
       test: ["CMD", "sh", "-c", "curl -f http://localhost:3002/health/live && curl -f http://localhost:3002/health/ready"]
       interval: 10s
@@ -100,7 +100,7 @@ services:
     environment:
       - DATABASE_URL=${DATABASE_URL}
       - LOG_LEVEL=${LOG_LEVEL:-info}
-    command: sh -c "npx prisma migrate deploy && nest start"
+    command: sh -c "npx prisma migrate deploy && npx prisma generate && node dist/main.js"
     ports:
       - 4000:4000
     depends_on:
