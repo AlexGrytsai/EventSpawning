@@ -5,6 +5,8 @@ import { HealthModule } from './modules/health/health.module'
 import { CorrelationIdService } from './common/services/correlation-id.service'
 import { CorrelationIdInterceptor } from './common/interceptors/correlation-id.interceptor'
 import { APP_INTERCEPTOR } from '@nestjs/core'
+import { ShutdownService } from './common/services/shutdown.service'
+import { PrismaModule } from './common/services/prisma.module'
 
 @Module({
     imports: [
@@ -16,9 +18,11 @@ import { APP_INTERCEPTOR } from '@nestjs/core'
         }),
         MetricsModule,
         HealthModule,
+        PrismaModule,
     ],
     providers: [
         CorrelationIdService,
+        ShutdownService,
         {
             provide: APP_INTERCEPTOR,
             useClass: CorrelationIdInterceptor,
