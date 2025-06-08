@@ -6,6 +6,7 @@ import { NatsPublisher } from '../../nats/services/nats.publisher'
 import { MetricsService } from '../../metrics/services/metrics.service'
 import { PrismaService } from '../../../common/services/prisma.service'
 import { Prisma } from '@prisma/client'
+import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library'
 import { CorrelationIdService } from '../../../common/services/correlation-id.service'
 
 @Injectable()
@@ -71,7 +72,7 @@ export class EventsService {
           })
         } catch (err) {
           if (
-            (err instanceof Prisma.PrismaClientKnownRequestError ||
+            (err instanceof PrismaClientKnownRequestError ||
               (err && err.name === 'PrismaClientKnownRequestError' && err.code === 'P2002')) &&
             Array.isArray(err.meta?.target) &&
             err.meta.target.includes('eventId')
