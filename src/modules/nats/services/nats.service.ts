@@ -52,6 +52,6 @@ import { MetricsModule } from '../../metrics/metrics.module'
       inject: [ConfigService],
     },
   ],
-  exports: ['NATS_JS', NatsPublisher],
+  exports: ['NATS_JS', 'NATS_JSM', NatsPublisher],
 })
 export class NatsService {}
