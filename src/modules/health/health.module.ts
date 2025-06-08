@@ -16,7 +16,6 @@ import { LoggerModule } from '../../common/services/logger.module'
     HealthService,
     NatsHealthIndicator,
     PostgresHealthIndicator,
-    PrismaService,
     ConfigService,
   ],
   exports: [HealthService],
