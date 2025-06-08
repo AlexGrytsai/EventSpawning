@@ -5,6 +5,6 @@ import { CorrelationIdService } from './correlation-id.service'
 
 @Module({
   providers: [LoggerService, ConfigService, CorrelationIdService],
-  exports: [LoggerService],
+  exports: [LoggerService, ConfigService, CorrelationIdService],
 })
 export class LoggerModule {} 
