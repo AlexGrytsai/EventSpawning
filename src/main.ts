@@ -9,13 +9,15 @@ async function bootstrap() {
     app.use(json({ limit: '50mb' }))
     app.use(urlencoded({ limit: '50mb', extended: true }))
     const server = app.getHttpAdapter().getInstance()
-    const config = new DocumentBuilder()
+    if (process.env.NODE_ENV !== 'production') {
+      const config = new DocumentBuilder()
         .setTitle('Event Spawning API')
         .setDescription('API documentation for Event Spawning service')
         .setVersion('1.0.0')
         .build()
-    const document = SwaggerModule.createDocument(app, config)
-    SwaggerModule.setup('api-docs', app, document)
+      const document = SwaggerModule.createDocument(app, config)
+      SwaggerModule.setup('api-docs', app, document)
+    }
     await app.listen(process.env.PORT || 3000)
 
     const shutdownService = app.get(ShutdownService)
