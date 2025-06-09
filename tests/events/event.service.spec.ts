@@ -2,6 +2,7 @@ import { EventsService } from '../../src/modules/events/services/event.service';
 import { LoggerService } from '../../src/common/services/logger.service';
 import { MetricsService } from '../../src/modules/metrics/services/metrics.service';
 import { register } from 'prom-client';
+import { DeadLetterQueueService } from '../../src/modules/events/services/dead-letter-queue.service'
 
 class MockPrismaClientKnownRequestError extends Error {
   code: string;
@@ -21,6 +22,7 @@ describe('EventsService', () => {
   let loggerService: LoggerService;
   let prisma: { event: { create: jest.Mock } };
   let correlationIdService: { runWithId: (id: string, fn: any) => any; getId: () => string };
+  let dlq: DeadLetterQueueService;
 
   beforeEach(() => {
     register.clear();
@@ -32,13 +34,14 @@ describe('EventsService', () => {
     };
     loggerService = new LoggerService({ get: jest.fn() } as any, correlationIdService as any);
     prisma = { event: { create: jest.fn() } };
+    dlq = { saveChunk: jest.fn() } as any;
     jest.spyOn(metricsService, 'incrementAccepted').mockImplementation(jest.fn());
     jest.spyOn(metricsService, 'incrementFailed').mockImplementation(jest.fn());
     jest.spyOn(metricsService, 'observeProcessingTime').mockImplementation(jest.fn());
     jest.spyOn(loggerService, 'logInfo').mockImplementation(jest.fn());
     jest.spyOn(loggerService, 'logEvent').mockImplementation(jest.fn());
     jest.spyOn(loggerService, 'logError').mockImplementation(jest.fn());
-    service = new EventsService(loggerService, natsPublisher as any, metricsService, prisma as any, correlationIdService as any);
+    service = new EventsService(loggerService, natsPublisher as any, metricsService, prisma as any, correlationIdService as any, dlq);
   });
 
   it('should process event successfully', async () => {
@@ -140,4 +143,56 @@ describe('EventsService', () => {
     expect(result).toEqual({ success: true, alreadyProcessed: true, correlationId: 'corr-unique' });
     expect(natsPublisher.publish).not.toHaveBeenCalled();
   });
-}); 
+});
+
+describe('EventsService batch processing', () => {
+  let service: EventsService
+  let prisma: any
+  let nats: any
+  let dlq: any
+
+  beforeEach(() => {
+    prisma = { event: { createMany: jest.fn() } }
+    nats = { batchPublish: jest.fn() }
+    dlq = { saveChunk: jest.fn() }
+    service = new EventsService(
+      { logError: jest.fn(), logEvent: jest.fn(), logInfo: jest.fn() } as any,
+      nats,
+      { incrementFailed: jest.fn(), incrementAccepted: jest.fn(), observeProcessingTime: jest.fn() } as any,
+      prisma,
+      { getId: jest.fn() } as any,
+      dlq
+    )
+  })
+
+  it('should batch insert and publish events', async () => {
+    prisma.event.createMany.mockResolvedValue({})
+    nats.batchPublish.mockResolvedValue([{ success: true }])
+    const events = [
+      { source: 'facebook', eventId: '1', timestamp: new Date().toISOString(), funnelStage: 'top', eventType: 'ad.view', data: { user: { userId: 'u1', name: 'n', age: 1, gender: 'male', location: { country: 'c', city: 'c' } }, engagement: { actionTime: 't', referrer: 'newsfeed', videoId: null } } },
+      { source: 'facebook', eventId: '2', timestamp: new Date().toISOString(), funnelStage: 'top', eventType: 'ad.view', data: { user: { userId: 'u2', name: 'n', age: 1, gender: 'male', location: { country: 'c', city: 'c' } }, engagement: { actionTime: 't', referrer: 'newsfeed', videoId: null } } }
+    ]
+    const res = await service.processEventsBatch(events)
+    expect(prisma.event.createMany).toHaveBeenCalled()
+    expect(nats.batchPublish).toHaveBeenCalled()
+    expect(res.some(r => r.success)).toBeTruthy()
+  })
+
+  it('should save chunk to DLQ on error', async () => {
+    prisma.event.createMany.mockRejectedValue(new Error('db error'))
+    const events = [
+      { source: 'facebook', eventId: '1', timestamp: new Date().toISOString(), funnelStage: 'top', eventType: 'ad.view', data: { user: { userId: 'u1', name: 'n', age: 1, gender: 'male', location: { country: 'c', city: 'c' } }, engagement: { actionTime: 't', referrer: 'newsfeed', videoId: null } } }
+    ]
+    await service.processEventsBatch(events)
+    expect(dlq.saveChunk).toHaveBeenCalled()
+  })
+
+  it('should return invalid results for invalid events', async () => {
+    const events = [
+      { invalid: true }
+    ]
+    const res = await service.processEventsBatch(events)
+    expect(res[0].success).toBe(false)
+    expect(res[0].error).toBeDefined()
+  })
+}) 

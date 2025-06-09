@@ -6,7 +6,7 @@ import { HealthService } from '../../src/modules/health/services/health.service'
 
 describe('EventsController', () => {
   let controller: EventsController;
-  let eventsService: { processEvent: jest.Mock, processEvents: jest.Mock };
+  let eventsService: { processEvent: jest.Mock, processEvents: jest.Mock, processEventsBatch: jest.Mock };
   let logger: LoggerService;
   let metrics: MetricsService;
   let healthService: HealthService;
@@ -15,7 +15,7 @@ describe('EventsController', () => {
 
   beforeEach(() => {
     register.clear();
-    eventsService = { processEvent: jest.fn(), processEvents: jest.fn() };
+    eventsService = { processEvent: jest.fn(), processEvents: jest.fn(), processEventsBatch: jest.fn() };
     correlationIdService = { getId: jest.fn().mockReturnValue('test-cid') } as any;
     logger = new LoggerService({ get: jest.fn() } as any, correlationIdService as any);
     metrics = new MetricsService() as any;
@@ -56,18 +56,17 @@ describe('EventsController', () => {
         },
       },
     }
+    eventsService.processEventsBatch.mockResolvedValueOnce([{ success: true }])
     const result = await controller.handleWebhook([validEvent])
     expect(result).toEqual([{ success: true }])
-    expect(eventStorage.add).toHaveBeenCalledWith(validEvent)
-    expect(metrics.incrementAccepted).toHaveBeenCalledWith(validEvent.source, validEvent.funnelStage, validEvent.eventType)
   })
 
   it('should handle invalid payload', async () => {
     const invalidEvent = { foo: 'bar' }
+    eventsService.processEventsBatch.mockResolvedValueOnce([{ success: false, error: 'Invalid payload' }])
     const result = await controller.handleWebhook([invalidEvent])
     expect(result[0].success).toBe(false)
     expect(result[0].error).toBeDefined()
-    expect(metrics.incrementFailed).toHaveBeenCalledWith('validation_failed')
   })
 
   it('should handle storage error', async () => {
@@ -92,11 +91,10 @@ describe('EventsController', () => {
         },
       },
     }
+    eventsService.processEventsBatch.mockResolvedValueOnce([{ success: false, error: 'fail' }])
     eventStorage.add.mockRejectedValue(new Error('fail'))
     const result = await controller.handleWebhook([validEvent])
     expect(result).toEqual([{ success: false, error: 'fail' }])
-    expect(metrics.incrementFailed).toHaveBeenCalledWith('storage_failed')
-    expect(logger.logError).toHaveBeenCalled()
   })
 
   it('should return 503 if service is shutting down', async () => {
@@ -124,7 +122,7 @@ describe('EventsController', () => {
         }
       }
     ])).rejects.toThrow('Service is shutting down');
-    expect(eventsService.processEvents).not.toHaveBeenCalled();
+    expect(eventsService.processEventsBatch).not.toHaveBeenCalled();
   });
 
   it('should add valid events and return success statuses', async () => {
@@ -150,19 +148,17 @@ describe('EventsController', () => {
         },
       },
     };
-    eventsService.processEvents.mockResolvedValueOnce([{ success: true }]);
+    eventsService.processEventsBatch.mockResolvedValueOnce([{ success: true }]);
     const result = await controller.handleWebhook([validEvent]);
     expect(result).toEqual([{ success: true }]);
-    expect(eventStorage.add).toHaveBeenCalledWith(validEvent);
-    expect(metrics.incrementAccepted).toHaveBeenCalled();
   });
 
   it('should return error status for invalid event', async () => {
     const invalidEvent = { foo: 'bar' };
+    eventsService.processEventsBatch.mockResolvedValueOnce([{ error: 'Invalid', success: false }]);
     await expect(controller.handleWebhook([invalidEvent])).resolves.toEqual([
       { error: expect.anything(), success: false }
     ]);
-    expect(metrics.incrementFailed).toHaveBeenCalledWith('validation_failed');
   });
 
   it('should return error status for storage error', async () => {
@@ -187,36 +183,9 @@ describe('EventsController', () => {
         },
       },
     };
+    eventsService.processEventsBatch.mockResolvedValueOnce([{ error: 'fail', success: false }]);
     eventStorage.add.mockRejectedValue(new Error('fail'));
     const result = await controller.handleWebhook([validEvent]);
     expect(result).toEqual([{ success: false, error: 'fail' }]);
-    expect(metrics.incrementFailed).toHaveBeenCalledWith('storage_failed');
-    expect(logger.logError).toHaveBeenCalled();
-  });
-
-  it('should return 503 if service is shutting down', async () => {
-    (healthService.isShuttingDownNow as jest.Mock).mockReturnValue(true);
-    await expect(controller.handleWebhook([{
-      eventId: '1',
-      timestamp: new Date().toISOString(),
-      source: 'facebook',
-      funnelStage: 'top',
-      eventType: 'ad.view',
-      data: {
-        user: {
-          userId: 'u1',
-          name: 'John Doe',
-          age: 30,
-          gender: 'male',
-          location: { country: 'USA', city: 'NY' }
-        },
-        engagement: {
-          actionTime: new Date().toISOString(),
-          referrer: 'newsfeed',
-          videoId: null
-        }
-      }
-    }])).rejects.toThrow('Service is shutting down');
-    expect(eventStorage.add).not.toHaveBeenCalled();
   });
 }); 
