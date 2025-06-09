@@ -10,6 +10,7 @@ import { CorrelationIdService } from '../../../common/services/correlation-id.se
 import { DeadLetterQueueService } from './dead-letter-queue.service'
 import { z } from 'zod'
 import pLimit from 'p-limit'
+import { EventPersistenceService } from '../../../common/services/event-persistence.service'
 
 type EventType = z.infer<typeof EventSchema>
 
@@ -30,7 +31,8 @@ export class EventsService {
     private readonly metrics: MetricsService,
     private readonly prisma: PrismaService,
     private readonly correlationIdService: CorrelationIdService,
-    private readonly dlq: DeadLetterQueueService
+    private readonly dlq: DeadLetterQueueService,
+    private readonly eventPersistence: EventPersistenceService
   ) {}
 
   /**
@@ -59,22 +61,7 @@ export class EventsService {
         const event = result.data
         this.logger.logEvent('Event received', { eventType: event.eventType, source: event.source, correlationId: id })
         try {
-          await this.prisma.event.create({
-            data: {
-              id: uuidv4(),
-              eventId: event.eventId,
-              timestamp: new Date(event.timestamp),
-              source: event.source,
-              funnelStage: event.funnelStage,
-              eventType: event.eventType,
-              userId: event.data?.user?.userId ?? null,
-              campaignId: (event.data?.engagement && typeof event.data.engagement === 'object' && 'campaignId' in event.data.engagement)
-                ? event.data.engagement.campaignId
-                : null,
-              engagement: event.data?.engagement ?? null,
-              raw: event,
-            } as any
-          })
+          await this.eventPersistence.saveEvent(event)
         } catch (err) {
           if (
             (err instanceof PrismaClientKnownRequestError ||
@@ -165,20 +152,9 @@ export class EventsService {
       this.metrics.incrementBatchConcurrency()
       const start = Date.now()
       try {
-        await this.prisma.event.createMany({ data: chunk.map(event => ({
-          id: uuidv4(),
-          eventId: event.eventId,
-          timestamp: new Date(event.timestamp),
-          source: event.source,
-          funnelStage: event.funnelStage,
-          eventType: event.eventType,
-          userId: (event as any).data?.user?.userId ?? null,
-          campaignId: ((event as any).data?.engagement && typeof (event as any).data.engagement === 'object' && 'campaignId' in (event as any).data.engagement)
-            ? (event as any).data.engagement.campaignId
-            : null,
-          engagement: (event as any).data?.engagement ?? null,
-          raw: event,
-        })) })
+        for (const event of chunk) {
+          await this.eventPersistence.saveEvent(event)
+        }
         const publishResults = await this.nats.batchPublish(chunk[0].source, chunk, correlationId)
         results.push(...publishResults)
         this.metrics.incrementAccepted(chunk[0].source, chunk[0].funnelStage, chunk[0].eventType)
