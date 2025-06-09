@@ -41,7 +41,9 @@ export class EventDispatcherService implements OnModuleInit, OnModuleDestroy {
   }
 
   async onModuleDestroy() {
-    if (this.timer) clearInterval(this.timer)
+    if (this.timer) {
+      clearInterval(this.timer)
+    }
   }
 
   private start() {
@@ -58,11 +60,15 @@ export class EventDispatcherService implements OnModuleInit, OnModuleDestroy {
   }
 
   private async processQueue() {
-    if (this.processing) return
+    if (this.processing) {
+      return
+    }
     this.processing = true
     const now = Date.now()
     for (const task of this.queue) {
-      if (task.nextAttempt > now) continue
+      if (task.nextAttempt > now) {
+        continue
+      }
       await this.dispatch(task)
     }
     this.queue = this.queue.filter(task => task.attempt < this.maxAttempts)
@@ -79,10 +85,12 @@ export class EventDispatcherService implements OnModuleInit, OnModuleDestroy {
       task.attempt = this.maxAttempts
     } catch (err: any) {
       task.attempt++
-      const delay = Math.min(this.interval * Math.pow(2, task.attempt), this.maxDelay)
+      const baseDelay = Math.min(this.interval * Math.pow(2, task.attempt), this.maxDelay)
+      const jitter = Math.random() * 0.5 * baseDelay
+      const delay = baseDelay + jitter
       task.nextAttempt = Date.now() + delay
       this.metrics.incrementFailed('dispatch_failed')
-      this.logger.logError('Failed to dispatch event', { eventId: event.eventId, attempt: task.attempt, error: err.message })
+      this.logger.logError('Failed to dispatch event', { eventId: event.eventId, attempt: task.attempt, error: err.message, stack: err.stack })
     }
   }
 } 
