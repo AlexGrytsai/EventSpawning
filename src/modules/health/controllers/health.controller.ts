@@ -26,13 +26,6 @@ export class HealthController {
   @ApiOperation({ summary: 'Liveness check', description: 'Checks if the service is live.' })
   @ApiResponse({ status: 200, description: 'Service is live' })
   @ApiResponse({ status: 503, description: 'Service is not live' })
-  /**
-   * Handles the liveness check endpoint.
-   * Responds with a 200 status and service information if the service is live,
-   * otherwise responds with a 503 status.
-   *
-   * @param res - The response object from Express.
-   */
   async liveness(@Res() res: Response) {
     const isLive = await this.healthService.checkLiveness()
     const service = this.getServiceName()
@@ -55,13 +48,6 @@ export class HealthController {
   @ApiOperation({ summary: 'Readiness check', description: 'Checks if the service is ready.' })
   @ApiResponse({ status: 200, description: 'Service is ready' })
   @ApiResponse({ status: 503, description: 'Service is not ready' })
-  /**
-   * Handles the readiness check endpoint.
-   * Responds with a 200 status and readiness information if the service is ready,
-   * otherwise responds with a 503 status.
-   *
-   * @param res - The response object from Express.
-   */
   async readiness(@Res() res: Response) {
     const service = this.getServiceName()
     if (this.healthService.isShuttingDownNow()) {
