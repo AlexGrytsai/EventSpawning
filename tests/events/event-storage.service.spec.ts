@@ -180,9 +180,6 @@ describe('EventStorageService', () => {
     process.env.EVENTS_FILE_PATH = '/invalid/path/events.jsonl'
     const result = await service.getAll()
     expect(result).toEqual([])
-    // Проверки моков оставляем, если ошибка не ENOENT
-    // expect(metricsMock.incrementFailed).toHaveBeenCalledWith('read_failed')
-    // expect(logger.logError).toHaveBeenCalled()
   })
 
   it('should log and count error on removeById file error', async () => {
@@ -193,7 +190,6 @@ describe('EventStorageService', () => {
   })
 
   it('should log and count error on flushQueue file error', async () => {
-    // Мокаем createWriteStream, чтобы выбрасывал ошибку через событие error
     const origCreateWriteStream = createWriteStream
     jest.spyOn(require('fs'), 'createWriteStream').mockImplementation(() => {
       const stream: any = {
@@ -218,16 +214,30 @@ describe('EventStorageService', () => {
   })
 
   it('should log and count error on backupFile file error', async () => {
-    // Мокаем fs.copyFile, чтобы выбрасывал ошибку
     jest.spyOn(fs, 'copyFile').mockRejectedValue(new Error('backup_failed'))
     process.env.EVENTS_FILE_PATH = filePath
     process.env.EVENTS_BACKUP_PATH = backupPath
-    // Создаём временный файл, чтобы existsSync(filePath) был true
     const fsSync = require('fs')
     fsSync.writeFileSync(filePath, 'test')
     await service['backupFile']()
     expect(metricsMock.incrementFailed).toHaveBeenCalledWith('backup_failed')
     expect(logger.logError).toHaveBeenCalled()
     ;(fs.copyFile as any).mockRestore()
+  })
+
+  it('should not call fs.copyFile or log error if source file does not exist', async () => {
+    const existsSyncSpy = jest.spyOn(require('fs'), 'existsSync').mockReturnValue(false)
+    const copyFileSpy = jest.spyOn(fs, 'copyFile')
+    process.env.EVENTS_FILE_PATH = filePath
+    process.env.EVENTS_BACKUP_PATH = backupPath
+
+    await service['backupFile']()
+
+    expect(existsSyncSpy).toHaveBeenCalledWith(filePath)
+    expect(copyFileSpy).not.toHaveBeenCalled()
+    expect(logger.logError).not.toHaveBeenCalled()
+    expect(metricsMock.incrementFailed).not.toHaveBeenCalled()
+    existsSyncSpy.mockRestore()
+    copyFileSpy.mockRestore()
   })
 }) 
