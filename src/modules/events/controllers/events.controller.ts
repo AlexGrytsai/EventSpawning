@@ -35,27 +35,6 @@ export class EventsController {
     if (this.healthService.isShuttingDownNow()) {
       throw new HttpException('Service is shutting down', HttpStatus.SERVICE_UNAVAILABLE)
     }
-    const parsed = EventArraySchema.safeParse(eventPayloads)
-    if (!parsed.success) {
-      this.metrics.incrementFailed('validation_failed')
-      const validationMessages = parsed.error.errors.map(
-        (err) => `${err.path.join('.')}: ${err.message}`
-      )
-      return [{ success: false, error: validationMessages }]
-    }
-    const results: { success: boolean; error?: any }[] = []
-    for (const event of parsed.data) {
-      try {
-        await this.eventStorage.add(event)
-        this.metrics.incrementAccepted(event.source, event.funnelStage, event.eventType)
-        results.push({ success: true })
-      } catch (error: any) {
-        this.metrics.incrementFailed('storage_failed')
-        this.logger.logError(error?.message || error)
-        results.push({ success: false, error: error?.message || error })
-      }
-    }
-    this.logger.logInfo('Webhook batch processed', { count: results.length })
-    return results
+    return this.eventsService.processEventsBatch(eventPayloads, correlationId)
   }
 } 
