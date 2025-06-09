@@ -20,7 +20,7 @@ describe('EventDispatcherService', () => {
     source: 'facebook',
     funnelStage: 'top',
     eventType: 'ad.view',
-    data: { user: { userId: 'u', name: 'n', age: 20, gender: 'male', location: { country: 'c', city: 't' } }, engagement: {} }
+    data: { user: { userId: 'u', name: 'n', age: 20, gender: 'male', location: { country: 'c', city: 't' } }, engagement: { actionTime: '2024-01-01T00:00:00Z', referrer: 'newsfeed', videoId: null } }
   }
 
   beforeEach(async () => {
