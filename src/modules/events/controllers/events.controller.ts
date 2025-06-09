@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Headers, UseFilters } from '@nestjs/common'
+import { Controller, Post, Body, Headers, UseFilters, HttpException, HttpStatus } from '@nestjs/common'
 import { ApiTags, ApiOperation, ApiResponse, ApiBody, ApiHeader } from '@nestjs/swagger'
 import { EventsService } from '../services/event.service'
 import { LoggerService } from '../../../common/services/logger.service'
@@ -33,7 +33,7 @@ export class EventsController {
     @Headers('x-correlation-id') correlationId?: string
   ): Promise<any> {
     if (this.healthService.isShuttingDownNow()) {
-      return [{ success: false, error: 'Service is shutting down' }]
+      throw new HttpException('Service is shutting down', HttpStatus.SERVICE_UNAVAILABLE)
     }
     const parsed = EventArraySchema.safeParse(eventPayloads)
     if (!parsed.success) {
