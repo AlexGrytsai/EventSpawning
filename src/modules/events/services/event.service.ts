@@ -7,6 +7,10 @@ import { MetricsService } from '../../metrics/services/metrics.service'
 import { PrismaService } from '../../../common/services/prisma.service'
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library'
 import { CorrelationIdService } from '../../../common/services/correlation-id.service'
+import { DeadLetterQueueService } from './dead-letter-queue.service'
+import { z } from 'zod'
+
+type EventType = z.infer<typeof EventSchema>
 
 @Injectable()
 /**
@@ -24,7 +28,8 @@ export class EventsService {
     private readonly nats: NatsPublisher,
     private readonly metrics: MetricsService,
     private readonly prisma: PrismaService,
-    private readonly correlationIdService: CorrelationIdService
+    private readonly correlationIdService: CorrelationIdService,
+    private readonly dlq: DeadLetterQueueService
   ) {}
 
   /**
@@ -129,6 +134,50 @@ export class EventsService {
         results.push(result)
       } catch (error) {
         results.push({ success: false, error: error.message, correlationId })
+      }
+    }
+    return results
+  }
+
+  async processEventsBatch(eventPayloads: unknown[], correlationId?: string) {
+    const chunkSize = +(process.env.EVENTS_CHUNK_SIZE || 100)
+    const validEvents: EventType[] = []
+    const invalidResults: { success: false; error: unknown; payload: unknown }[] = []
+    for (const payload of eventPayloads) {
+      const result = EventSchema.safeParse(payload)
+      if (result.success) {
+        validEvents.push(result.data)
+      } else {
+        invalidResults.push({ success: false, error: result.error.errors, payload })
+      }
+    }
+    const chunks: EventType[][] = []
+    for (let i = 0; i < validEvents.length; i += chunkSize) {
+      chunks.push(validEvents.slice(i, i + chunkSize))
+    }
+    const results: Array<any> = [...invalidResults]
+    for (const chunk of chunks) {
+      try {
+        await this.prisma.event.createMany({ data: chunk.map(event => ({
+          id: uuidv4(),
+          eventId: event.eventId,
+          timestamp: new Date(event.timestamp),
+          source: event.source,
+          funnelStage: event.funnelStage,
+          eventType: event.eventType,
+          userId: (event as any).data?.user?.userId ?? null,
+          campaignId: ((event as any).data?.engagement && typeof (event as any).data.engagement === 'object' && 'campaignId' in (event as any).data.engagement)
+            ? (event as any).data.engagement.campaignId
+            : null,
+          engagement: (event as any).data?.engagement ?? null,
+          raw: event,
+        })) })
+        const publishResults = await this.nats.batchPublish(chunk[0].source, chunk, correlationId)
+        results.push(...publishResults)
+        this.metrics.incrementAccepted(chunk[0].source, chunk[0].funnelStage, chunk[0].eventType)
+      } catch (err) {
+        await this.dlq.saveChunk(chunk)
+        results.push({ success: false, error: err instanceof Error ? err.message : err, chunk })
       }
     }
     return results
