@@ -123,7 +123,7 @@ describe('EventsController', () => {
           }
         }
       }
-    ])).resolves.toEqual([{ error: 'Service is shutting down', success: false }]);
+    ])).rejects.toThrow('Service is shutting down');
     expect(eventsService.processEvents).not.toHaveBeenCalled();
   });
 
@@ -216,7 +216,7 @@ describe('EventsController', () => {
           videoId: null
         }
       }
-    }])).resolves.toEqual([{ error: 'Service is shutting down', success: false }]);
+    }])).rejects.toThrow('Service is shutting down');
     expect(eventStorage.add).not.toHaveBeenCalled();
   });
 }); 

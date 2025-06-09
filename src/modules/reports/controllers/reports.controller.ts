@@ -10,6 +10,7 @@ import { HttpExceptionFilter } from '../../../common/filters/http-exception.filt
 import { v4 as uuidv4 } from 'uuid'
 import { DemographicsReportFilterDto } from '../dto/demographics-report-filter.dto'
 import { IsOptional, IsString, IsEnum } from 'class-validator'
+import { CorrelationIdService } from '../../../common/services/correlation-id.service'
 
 class EventsReportFilterDtoSwagger {
   @ApiPropertyOptional({ description: 'Start date', type: String, format: 'date-time', example: '2023-01-01T00:00:00.000Z' })
@@ -55,7 +56,8 @@ export class ReportsController {
   constructor(
     private readonly reportsService: ReportsService,
     private readonly logger: LoggerService,
-    private readonly metrics: MetricsService
+    private readonly metrics: MetricsService,
+    private readonly correlationIdService: CorrelationIdService
   ) {}
 
   @Get('revenue')
@@ -65,10 +67,9 @@ export class ReportsController {
   @ApiResponse({ status: 200, description: 'Revenue report generated', schema: { type: 'object' } })
   @ApiResponse({ status: 400, description: 'Invalid filters or error' })
   async getRevenueReport(
-    @Query() query: RevenueReportFilterDto,
-    @Headers('x-correlation-id') correlationId?: string
+    @Query() query: RevenueReportFilterDto
   ) {
-    const corrId = correlationId || uuidv4()
+    const corrId = this.correlationIdService.getId()
     const startTime = Date.now()
     try {
       const filters = RevenueReportFilterSchema.parse(query)
@@ -94,10 +95,9 @@ export class ReportsController {
   @ApiResponse({ status: 200, description: 'Events report generated', schema: { type: 'object' } })
   @ApiResponse({ status: 400, description: 'Invalid filters or error' })
   async getEventsReport(
-    @Query() query: any,
-    @Headers('x-correlation-id') correlationId?: string
+    @Query() query: any
   ) {
-    const corrId = correlationId || uuidv4()
+    const corrId = this.correlationIdService.getId()
     const startTime = Date.now()
     try {
       const filter = EventsReportFilterZod.parse(query)
@@ -123,10 +123,9 @@ export class ReportsController {
   @ApiResponse({ status: 200, description: 'Demographics report generated', schema: { type: 'object' } })
   @ApiResponse({ status: 400, description: 'Invalid filters or error' })
   async getDemographicsReport(
-    @Query() query: DemographicsReportFilterDto,
-    @Headers('x-correlation-id') correlationId?: string
+    @Query() query: DemographicsReportFilterDto
   ) {
-    const corrId = correlationId || uuidv4()
+    const corrId = this.correlationIdService.getId()
     const startTime = Date.now()
     try {
       const filter = DemographicsReportFilterSchema.parse(query)
