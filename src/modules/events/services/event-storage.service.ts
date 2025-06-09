@@ -2,7 +2,6 @@ import { Injectable } from '@nestjs/common'
 import { EventSchema } from '../dto/event.zod'
 import * as fs from 'fs/promises'
 import { createWriteStream, existsSync } from 'fs'
-import { EventEmitter } from 'events'
 import { LoggerService } from '../../../common/services/logger.service'
 import { MetricsService } from '../../metrics/services/metrics.service'
 

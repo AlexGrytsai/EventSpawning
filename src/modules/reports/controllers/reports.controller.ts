@@ -1,4 +1,4 @@
-import { Controller, Get, Query, Headers, UseFilters, HttpException, HttpStatus } from '@nestjs/common'
+import { Controller, Get, Query, UseFilters, HttpException, HttpStatus } from '@nestjs/common'
 import { ApiTags, ApiOperation, ApiResponse, ApiQuery, ApiHeader, ApiPropertyOptional } from '@nestjs/swagger'
 import { ReportsService } from '../services/reports.service'
 import { RevenueReportFilterDto, RevenueReportFilterSchema } from '../../../common/dto/revenue-report-filter.dto'
@@ -7,7 +7,6 @@ import { DemographicsReportFilterSchema } from '../../../common/dto/demographics
 import { LoggerService } from '../../../common/services/logger.service'
 import { MetricsService } from '../../metrics/services/metrics.service'
 import { HttpExceptionFilter } from '../../../common/filters/http-exception.filter'
-import { v4 as uuidv4 } from 'uuid'
 import { DemographicsReportFilterDto } from '../dto/demographics-report-filter.dto'
 import { IsOptional, IsString, IsEnum } from 'class-validator'
 import { CorrelationIdService } from '../../../common/services/correlation-id.service'
