@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common'
 import * as fs from 'fs/promises'
 import { createWriteStream, existsSync } from 'fs'
-import * as readline from 'readline'
 
 const DLQ_PATH = process.env.DLQ_PATH || './data/dead_letter_queue.jsonl'
 
