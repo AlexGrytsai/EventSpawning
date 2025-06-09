@@ -3,7 +3,9 @@ import { Response } from 'express'
 import { HealthService } from '../services/health.service'
 import { ConfigService } from '../../../common/services/config.service'
 import { PrismaService } from '../../../common/services/prisma.service'
+import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger'
 
+@ApiTags('Health')
 @Controller('health')
 export class HealthController {
   constructor(
@@ -21,13 +23,9 @@ export class HealthController {
   }
 
   @Get('liveness')
-  /**
-   * Handles the liveness check endpoint.
-   * Responds with a 200 status and service information if the service is live,
-   * otherwise responds with a 503 status.
-   *
-   * @param res - The response object from Express.
-   */
+  @ApiOperation({ summary: 'Liveness check', description: 'Checks if the service is live.' })
+  @ApiResponse({ status: 200, description: 'Service is live' })
+  @ApiResponse({ status: 503, description: 'Service is not live' })
   async liveness(@Res() res: Response) {
     const isLive = await this.healthService.checkLiveness()
     const service = this.getServiceName()
@@ -47,13 +45,9 @@ export class HealthController {
   }
 
   @Get('readiness')
-  /**
-   * Handles the readiness check endpoint.
-   * Responds with a 200 status and readiness information if the service is ready,
-   * otherwise responds with a 503 status.
-   *
-   * @param res - The response object from Express.
-   */
+  @ApiOperation({ summary: 'Readiness check', description: 'Checks if the service is ready.' })
+  @ApiResponse({ status: 200, description: 'Service is ready' })
+  @ApiResponse({ status: 503, description: 'Service is not ready' })
   async readiness(@Res() res: Response) {
     const service = this.getServiceName()
     if (this.healthService.isShuttingDownNow()) {
@@ -90,11 +84,13 @@ export class HealthController {
   }
 
   @Get('live')
+  @ApiOperation({ summary: 'Alias for liveness', description: 'Alias endpoint for liveness check.' })
   async live(@Res() res: Response) {
     return this.liveness(res)
   }
 
   @Get('ready')
+  @ApiOperation({ summary: 'Alias for readiness', description: 'Alias endpoint for readiness check.' })
   async ready(@Res() res: Response) {
     return this.readiness(res)
   }

@@ -3,17 +3,17 @@ import { Counter, Histogram, register } from 'prom-client'
 
 @Injectable()
 export class MetricsService {
-    private acceptedCounter = new Counter({
+    private acceptedCounter = (register.getSingleMetric('events_accepted_total') as Counter) || new Counter({
         name: 'events_accepted_total',
         help: 'Total number of accepted events',
         labelNames: ['source', 'funnelStage', 'eventType']
     })
-    private failedCounter = new Counter({
+    private failedCounter = (register.getSingleMetric('events_failed_total') as Counter) || new Counter({
         name: 'events_failed_total',
         help: 'Total number of failed events',
         labelNames: ['reason']
     })
-    private processingTimeHistogram = new Histogram({
+    private processingTimeHistogram = (register.getSingleMetric('event_processing_time_ms') as Histogram) || new Histogram({
         name: 'event_processing_time_ms',
         help: 'Processing time of events in ms',
         buckets: [10, 50, 100, 200, 500, 1000, 2000, 5000]

@@ -5,7 +5,7 @@ import { LoggerService } from '../../../common/services/logger.service'
 import { NatsPublisher } from '../../nats/services/nats.publisher'
 import { MetricsService } from '../../metrics/services/metrics.service'
 import { PrismaService } from '../../../common/services/prisma.service'
-import { Prisma } from '@prisma/client'
+import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library'
 import { CorrelationIdService } from '../../../common/services/correlation-id.service'
 
 @Injectable()
@@ -71,7 +71,7 @@ export class EventsService {
           })
         } catch (err) {
           if (
-            (err instanceof Prisma.PrismaClientKnownRequestError ||
+            (err instanceof PrismaClientKnownRequestError ||
               (err && err.name === 'PrismaClientKnownRequestError' && err.code === 'P2002')) &&
             Array.isArray(err.meta?.target) &&
             err.meta.target.includes('eventId')
@@ -116,5 +116,21 @@ export class EventsService {
       })
     }
     return this.allTasksDonePromise
+  }
+
+  async processEvents(eventPayloads: unknown[], correlationId?: string) {
+    const results: Array<
+      { success: boolean; correlationId: string; alreadyProcessed?: boolean } |
+      { success: false; error: any; correlationId?: string }
+    > = []
+    for (const payload of eventPayloads) {
+      try {
+        const result = await this.processEvent(payload, correlationId)
+        results.push(result)
+      } catch (error) {
+        results.push({ success: false, error: error.message, correlationId })
+      }
+    }
+    return results
   }
 }

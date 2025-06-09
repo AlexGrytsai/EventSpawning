@@ -1,6 +1,6 @@
-import { EventsService } from '../services/event.service';
-import { LoggerService } from '../../../common/services/logger.service';
-import { MetricsService } from '../../metrics/services/metrics.service';
+import { EventsService } from '../../src/modules/events/services/event.service';
+import { LoggerService } from '../../src/common/services/logger.service';
+import { MetricsService } from '../../src/modules/metrics/services/metrics.service';
 import { register } from 'prom-client';
 
 class MockPrismaClientKnownRequestError extends Error {

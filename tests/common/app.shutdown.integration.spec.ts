@@ -1,11 +1,11 @@
 import { Test, TestingModule } from '@nestjs/testing'
 import { INestApplication, Module } from '@nestjs/common'
 import * as request from 'supertest'
-import { ShutdownService } from '../services/shutdown.service'
-import { HealthService } from '../../modules/health/services/health.service'
-import { PrismaService } from '../services/prisma.service'
-import { NatsPublisher } from '../../modules/nats/services/nats.publisher'
-import { EventsService } from '../../modules/events/services/event.service'
+import { ShutdownService } from '../../src/common/services/shutdown.service'
+import { HealthService } from '../../src/modules/health/services/health.service'
+import { PrismaService } from '../../src/common/services/prisma.service'
+import { NatsPublisher } from '../../src/modules/nats/services/nats.publisher'
+import { EventsService } from '../../src/modules/events/services/event.service'
 
 class MockHealthService {
   setReadiness = jest.fn()

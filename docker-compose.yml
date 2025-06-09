@@ -1,6 +1,7 @@
 services:
   publisher:
     image: andriiuni/events
+    restart: always
     environment:
       - EVENT_ENDPOINT=${EVENT_ENDPOINT}
     depends_on:
@@ -35,8 +36,11 @@ services:
       - EVENT_ENDPOINT=${EVENT_ENDPOINT}
       - NATS_URL=${NATS_URL}
       - LOG_LEVEL=${LOG_LEVEL:-info}
+      - DATABASE_URL=${DATABASE_URL}
     ports:
       - 3000:3000
+    restart: always
+    command: sh -c "npx prisma migrate deploy && npx prisma generate && node dist/main.js"
     healthcheck:
       test: ["CMD", "sh", "-c", "curl -f http://localhost:3000/health/live && curl -f http://localhost:3000/health/ready"]
       interval: 10s
@@ -48,15 +52,22 @@ services:
         condition: service_healthy
       postgres:
         condition: service_healthy
+    volumes:
+      - gatewaydata:/data
 
   fb-collector:
     build:
       context: .
       dockerfile: src/infrastructure/docker/fb-collector.Dockerfile
     environment:
+      - EVENT_ENDPOINT=${EVENT_ENDPOINT}
       - NATS_URL=${NATS_URL}
-      - DATABASE_URL=${DATABASE_URL}
       - LOG_LEVEL=${LOG_LEVEL:-info}
+      - DATABASE_URL=${DATABASE_URL}
+    restart: always
+    ports:
+      - 3001:3001
+    command: sh -c "npx prisma migrate deploy && npx prisma generate && node dist/main.js"
     depends_on:
       nats:
         condition: service_healthy
@@ -74,14 +85,19 @@ services:
       context: .
       dockerfile: src/infrastructure/docker/ttk-collector.Dockerfile
     environment:
+      - EVENT_ENDPOINT=${EVENT_ENDPOINT}
       - NATS_URL=${NATS_URL}
-      - DATABASE_URL=${DATABASE_URL}
       - LOG_LEVEL=${LOG_LEVEL:-info}
+      - DATABASE_URL=${DATABASE_URL}
+    restart: always
+    ports:
+      - 3002:3002
     depends_on:
       nats:
         condition: service_healthy
       postgres:
         condition: service_healthy
+    command: sh -c "npx prisma migrate deploy && npx prisma generate && node dist/main.js"
     healthcheck:
       test: ["CMD", "sh", "-c", "curl -f http://localhost:3002/health/live && curl -f http://localhost:3002/health/ready"]
       interval: 10s
@@ -94,8 +110,12 @@ services:
       context: .
       dockerfile: src/infrastructure/docker/reporter.Dockerfile
     environment:
-      - DATABASE_URL=${DATABASE_URL}
+      - EVENT_ENDPOINT=${EVENT_ENDPOINT}
+      - NATS_URL=${NATS_URL}
       - LOG_LEVEL=${LOG_LEVEL:-info}
+      - DATABASE_URL=${DATABASE_URL}
+    command: sh -c "npx prisma migrate deploy && npx prisma generate && node dist/main.js"
+    restart: always
     ports:
       - 4000:4000
     depends_on:
@@ -129,6 +149,7 @@ services:
   nats:
     image: nats:latest
     command: [ "-js" ]
+    restart: always
     ports:
       - 4222:4222
       - 8222:8222
@@ -143,6 +164,7 @@ services:
 
   prometheus:
     image: prom/prometheus:latest
+    restart: always
     volumes:
       - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
       - prometheusdata:/prometheus
@@ -157,6 +179,7 @@ services:
 
   grafana:
     image: grafana/grafana:latest
+    restart: always
     volumes:
       - ./grafana/provisioning:/etc/grafana/provisioning
       - grafanadata:/var/lib/grafana
@@ -170,7 +193,8 @@ services:
       start_period: 30s
 
 volumes:
+  gatewaydata:
   pgdata:
   natsdata:
   prometheusdata:
-  grafanadata: 
+  grafanadata:

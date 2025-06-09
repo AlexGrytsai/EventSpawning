@@ -1,4 +1,4 @@
-import { NatsConsumer } from '../services/nats.consumer'
+import { NatsConsumer } from '../../src/modules/nats/services/nats.consumer'
 
 describe('NatsConsumer', () => {
   let consumer: NatsConsumer

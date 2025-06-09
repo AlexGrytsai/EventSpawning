@@ -1,7 +1,7 @@
-import { ReportsService } from '../services/reports.service'
-import { PrismaService } from '../../../common/services/prisma.service'
-import { LoggerService } from '../../../common/services/logger.service'
-import { MetricsService } from '../../metrics/services/metrics.service'
+import { ReportsService } from '../../src/modules/reports/services/reports.service'
+import { PrismaService } from '../../src/common/services/prisma.service'
+import { LoggerService } from '../../src/common/services/logger.service'
+import { MetricsService } from '../../src/modules/metrics/services/metrics.service'
 
 describe('ReportsService - getRevenueReport', () => {
   let service: ReportsService
@@ -49,7 +49,6 @@ describe('ReportsService - getRevenueReport', () => {
 
   it('should filter by source using related events', async () => {
     prisma.revenueEvent.groupBy.mockResolvedValue([
-      { campaignId: 'c1', currency: 'USD', _sum: { amount: 100 }, _count: { _all: 2 } },
       { campaignId: 'c2', currency: 'USD', _sum: { amount: 200 }, _count: { _all: 3 } },
     ])
     prisma.event.findMany.mockResolvedValue([{ campaignId: 'c2' }])
@@ -66,7 +65,9 @@ describe('ReportsService - getRevenueReport', () => {
       _sum: { amount: 10 * (i + 1) },
       _count: { _all: 1 },
     }))
-    prisma.revenueEvent.groupBy.mockResolvedValue(groups)
+    prisma.revenueEvent.groupBy
+      .mockResolvedValueOnce(groups)
+      .mockResolvedValueOnce(groups.slice(50, 60))
     const result = await service.getRevenueReport({ page: 2 })
     expect(result.data.length).toBe(10)
     expect(result.pagination.page).toBe(2)
