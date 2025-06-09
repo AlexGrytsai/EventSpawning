@@ -4,6 +4,7 @@ import * as fs from 'fs/promises'
 import { createWriteStream, existsSync } from 'fs'
 import { LoggerService } from '../../../common/services/logger.service'
 import { MetricsService } from '../../metrics/services/metrics.service'
+import * as readline from 'readline'
 
 const FLUSH_INTERVAL = +(process.env.EVENTS_FLUSH_INTERVAL_MS || 1000)
 const BACKUP_INTERVAL = +(process.env.EVENTS_BACKUP_INTERVAL_MS || 60000)
@@ -150,5 +151,41 @@ export class EventStorageService {
     }
     await this.flushQueue()
     await this.backupFile()
+  }
+
+  async getEventsPaginated(page: number, pageSize: number): Promise<unknown[]> {
+    const filePath = process.env.EVENTS_FILE_PATH || '/data/events.jsonl'
+    const events: unknown[] = []
+    const start = (page - 1) * pageSize
+    const end = start + pageSize
+    let index = 0
+    try {
+      const fileStream = await fs.open(filePath, 'r')
+      const rl = readline.createInterface({
+        input: fileStream.createReadStream(),
+        crlfDelay: Infinity,
+      })
+      for await (const line of rl) {
+        if (index >= start && index < end) {
+          try {
+            events.push(JSON.parse(line))
+          } catch {}
+        }
+        if (index >= end) {
+          break
+        }
+        index++
+      }
+      await fileStream.close()
+      return events
+    } catch (err: any) {
+      if (err.code === 'ENOENT') {
+        return []
+      }
+      this.metrics.readErrors++
+      this.metricsService.incrementFailed('read_failed')
+      this.logger.logError('Failed to read events file (paginated)', { error: err.message })
+      throw err
+    }
   }
 } 
