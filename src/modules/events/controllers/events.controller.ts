@@ -38,7 +38,10 @@ export class EventsController {
     const parsed = EventArraySchema.safeParse(eventPayloads)
     if (!parsed.success) {
       this.metrics.incrementFailed('validation_failed')
-      return [{ success: false, error: parsed.error }]
+      const validationMessages = parsed.error.errors.map(
+        (err) => `${err.path.join('.')}: ${err.message}`
+      )
+      return [{ success: false, error: validationMessages }]
     }
     const results: { success: boolean; error?: any }[] = []
     for (const event of parsed.data) {
