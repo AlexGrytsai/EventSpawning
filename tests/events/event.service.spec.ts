@@ -158,7 +158,14 @@ describe('EventsService batch processing', () => {
     service = new EventsService(
       { logError: jest.fn(), logEvent: jest.fn(), logInfo: jest.fn() } as any,
       nats,
-      { incrementFailed: jest.fn(), incrementAccepted: jest.fn(), observeProcessingTime: jest.fn() } as any,
+      {
+        incrementFailed: jest.fn(),
+        incrementAccepted: jest.fn(),
+        observeProcessingTime: jest.fn(),
+        incrementBatchConcurrency: jest.fn(),
+        decrementBatchConcurrency: jest.fn(),
+        observeBatchChunkProcessingTime: jest.fn()
+      } as any,
       prisma,
       { getId: jest.fn() } as any,
       dlq
