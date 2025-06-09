@@ -7,6 +7,8 @@ import { NatsPublisher } from '../nats/services/nats.publisher'
 import { MetricsModule } from '../metrics/metrics.module'
 import { LoggerModule } from '../../common/services/logger.module'
 import { NatsModule } from '../nats/nats.module'
+import { EventStorageService } from './services/event-storage.service'
+import { EventDispatcherService } from './services/event-dispatcher.service'
 
 @Module({
   imports: [MetricsModule, LoggerModule, HealthModule, NatsModule],
@@ -15,7 +17,9 @@ import { NatsModule } from '../nats/nats.module'
     EventsService,
     PrismaService,
     NatsPublisher,
+    EventStorageService,
+    EventDispatcherService,
   ],
-  exports: [EventsService],
+  exports: [EventsService, EventStorageService, EventDispatcherService],
 })
 export class EventsModule {} 
