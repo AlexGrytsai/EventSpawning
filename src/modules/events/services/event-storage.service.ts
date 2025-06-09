@@ -15,7 +15,6 @@ export class EventStorageService {
   private flushTimer: NodeJS.Timeout | null = null
   private backupTimer: NodeJS.Timeout | null = null
   private flushing = false
-  private eventEmitter = new EventEmitter()
   private metrics = {
     eventsInQueue: 0,
     writeErrors: 0,
@@ -40,7 +39,6 @@ export class EventStorageService {
     try {
       this.queue.push(parsed.data)
       this.metrics.eventsInQueue = this.queue.length
-      this.eventEmitter.emit('eventAdded')
     } catch (error) {
       this.metricsService.incrementFailed('storage_failed')
       this.logger.logError('Failed to add event to queue', { error: error.message, event })
