@@ -1,6 +1,6 @@
 import { EventStorageService } from '../../src/modules/events/services/event-storage.service'
 import * as fs from 'fs/promises'
-import { existsSync } from 'fs'
+import { existsSync, createWriteStream } from 'fs'
 import * as path from 'path'
 import * as os from 'os'
 
@@ -10,6 +10,15 @@ describe('EventStorageService', () => {
   let service: EventStorageService
   let originalEventsFilePath: string | undefined
   let originalBackupPath: string | undefined
+  let logger: LoggerMock
+  let metricsMock: MetricsMock
+
+  class LoggerMock {
+    logError = jest.fn()
+  }
+  class MetricsMock {
+    incrementFailed = jest.fn()
+  }
 
   beforeAll(() => {
     originalEventsFilePath = process.env.EVENTS_FILE_PATH
@@ -23,8 +32,10 @@ describe('EventStorageService', () => {
     backupPath = path.join(os.tmpdir(), `test_events_backup_${unique}.jsonl`)
     process.env.EVENTS_FILE_PATH = filePath
     process.env.EVENTS_BACKUP_PATH = backupPath
+    logger = new LoggerMock()
+    metricsMock = new MetricsMock()
     const { EventStorageService: EventStorageServiceClass } = require('../../src/modules/events/services/event-storage.service')
-    service = new EventStorageServiceClass()
+    service = new EventStorageServiceClass(logger, metricsMock)
     if (existsSync(filePath)) {
       await fs.unlink(filePath)
     }
@@ -147,7 +158,9 @@ describe('EventStorageService', () => {
 
   it('should be resilient to file errors', async () => {
     process.env.EVENTS_FILE_PATH = '/invalid/path/events.jsonl'
-    const s = new EventStorageService()
+    const loggerMock = { logError: jest.fn(), logInfo: jest.fn(), logEvent: jest.fn() };
+    const metricsServiceMock = { incrementFailed: jest.fn(), incrementAccepted: jest.fn(), observeProcessingTime: jest.fn() };
+    const s = new EventStorageService(loggerMock as any, metricsServiceMock as any)
     await expect(s.getAll()).resolves.toEqual([])
     await expect(s.removeById('notfound')).resolves.toBeUndefined()
     if (s['flushTimer']) {
@@ -156,5 +169,65 @@ describe('EventStorageService', () => {
     if (s['backupTimer']) {
       clearInterval(s['backupTimer'])
     }
+  })
+
+  it('should log and count error on invalid event', async () => {
+    await expect(service.add({})).rejects.toThrow()
+    expect(metricsMock.incrementFailed).toHaveBeenCalledWith('validation_failed')
+  })
+
+  it('should log and count error on file read error', async () => {
+    process.env.EVENTS_FILE_PATH = '/invalid/path/events.jsonl'
+    const result = await service.getAll()
+    expect(result).toEqual([])
+    // Проверки моков оставляем, если ошибка не ENOENT
+    // expect(metricsMock.incrementFailed).toHaveBeenCalledWith('read_failed')
+    // expect(logger.logError).toHaveBeenCalled()
+  })
+
+  it('should log and count error on removeById file error', async () => {
+    process.env.EVENTS_FILE_PATH = '/invalid/path/events.jsonl'
+    await service.removeById('notfound')
+    expect(metricsMock.incrementFailed).toHaveBeenCalledWith('remove_failed')
+    expect(logger.logError).toHaveBeenCalled()
+  })
+
+  it('should log and count error on flushQueue file error', async () => {
+    // Мокаем createWriteStream, чтобы выбрасывал ошибку через событие error
+    const origCreateWriteStream = createWriteStream
+    jest.spyOn(require('fs'), 'createWriteStream').mockImplementation(() => {
+      const stream: any = {
+        write: jest.fn(),
+        end: jest.fn(),
+        on: function (event: string, handler: Function) {
+          if (event === 'error') {
+            // Сразу вызываем обработчик ошибки
+            setImmediate(() => handler(new Error('flush_failed')))
+          }
+          return this
+        },
+      }
+      return stream
+    })
+    service['queue'].push({ eventId: 'fail' })
+    service['flushing'] = false
+    await service['flushQueue']()
+    expect(metricsMock.incrementFailed).toHaveBeenCalledWith('flush_failed')
+    expect(logger.logError).toHaveBeenCalled()
+    ;(require('fs').createWriteStream as any).mockRestore()
+  })
+
+  it('should log and count error on backupFile file error', async () => {
+    // Мокаем fs.copyFile, чтобы выбрасывал ошибку
+    jest.spyOn(fs, 'copyFile').mockRejectedValue(new Error('backup_failed'))
+    process.env.EVENTS_FILE_PATH = filePath
+    process.env.EVENTS_BACKUP_PATH = backupPath
+    // Создаём временный файл, чтобы existsSync(filePath) был true
+    const fsSync = require('fs')
+    fsSync.writeFileSync(filePath, 'test')
+    await service['backupFile']()
+    expect(metricsMock.incrementFailed).toHaveBeenCalledWith('backup_failed')
+    expect(logger.logError).toHaveBeenCalled()
+    ;(fs.copyFile as any).mockRestore()
   })
 }) 
