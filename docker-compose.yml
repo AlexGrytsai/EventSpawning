@@ -193,8 +193,8 @@ services:
       start_period: 30s
 
 volumes:
+  gatewaydata:
   pgdata:
   natsdata:
   prometheusdata:
   grafanadata:
-  gatewaydata: 
