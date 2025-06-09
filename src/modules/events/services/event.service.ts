@@ -9,6 +9,7 @@ import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library'
 import { CorrelationIdService } from '../../../common/services/correlation-id.service'
 import { DeadLetterQueueService } from './dead-letter-queue.service'
 import { z } from 'zod'
+import pLimit from 'p-limit'
 
 type EventType = z.infer<typeof EventSchema>
 
@@ -141,6 +142,7 @@ export class EventsService {
 
   async processEventsBatch(eventPayloads: unknown[], correlationId?: string) {
     const chunkSize = +(process.env.EVENTS_CHUNK_SIZE || 100)
+    const concurrency = +(process.env.EVENTS_BATCH_CONCURRENCY || 5)
     const validEvents: EventType[] = []
     const invalidResults: { success: false; error: unknown; payload: unknown }[] = []
     for (const payload of eventPayloads) {
@@ -156,7 +158,12 @@ export class EventsService {
       chunks.push(validEvents.slice(i, i + chunkSize))
     }
     const results: Array<any> = [...invalidResults]
-    for (const chunk of chunks) {
+    const limit = pLimit(concurrency)
+    let currentConcurrency = 0
+    const chunkPromises = chunks.map(chunk => limit(async () => {
+      currentConcurrency++
+      this.metrics.incrementBatchConcurrency()
+      const start = Date.now()
       try {
         await this.prisma.event.createMany({ data: chunk.map(event => ({
           id: uuidv4(),
@@ -178,8 +185,14 @@ export class EventsService {
       } catch (err) {
         await this.dlq.saveChunk(chunk)
         results.push({ success: false, error: err instanceof Error ? err.message : err, chunk })
+      } finally {
+        const duration = Date.now() - start
+        this.metrics.observeBatchChunkProcessingTime(duration)
+        currentConcurrency--
+        this.metrics.decrementBatchConcurrency()
       }
-    }
+    }))
+    await Promise.all(chunkPromises)
     return results
   }
 }
