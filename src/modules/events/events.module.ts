@@ -9,6 +9,7 @@ import { LoggerModule } from '../../common/services/logger.module'
 import { NatsModule } from '../nats/nats.module'
 import { EventStorageService } from './services/event-storage.service'
 import { EventDispatcherService } from './services/event-dispatcher.service'
+import { DeadLetterQueueService } from './services/dead-letter-queue.service'
 
 @Module({
   imports: [MetricsModule, LoggerModule, HealthModule, NatsModule],
@@ -19,7 +20,8 @@ import { EventDispatcherService } from './services/event-dispatcher.service'
     NatsPublisher,
     EventStorageService,
     EventDispatcherService,
+    DeadLetterQueueService,
   ],
-  exports: [EventsService, EventStorageService, EventDispatcherService],
+  exports: [EventsService, EventStorageService, EventDispatcherService, DeadLetterQueueService],
 })
 export class EventsModule {} 
