@@ -5,7 +5,6 @@ import { LoggerService } from '../../../common/services/logger.service'
 import { MetricsService } from '../../metrics/services/metrics.service'
 import { HttpExceptionFilter } from '../../../common/filters/http-exception.filter'
 import { HealthService } from '../../health/services/health.service'
-import { EventArraySchema } from '../dto/event.zod'
 import { EventStorageService } from '../services/event-storage.service'
 
 @ApiTags('Events')
