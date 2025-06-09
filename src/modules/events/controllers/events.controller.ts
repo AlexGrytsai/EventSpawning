@@ -7,6 +7,7 @@ import { HttpExceptionFilter } from '../../../common/filters/http-exception.filt
 import { v4 as uuidv4 } from 'uuid'
 import { HealthService } from '../../health/services/health.service'
 import { EventArraySchema } from '../dto/event.zod'
+import { EventStorageService } from '../services/event-storage.service'
 
 @ApiTags('Events')
 @Controller('events')
@@ -16,7 +17,8 @@ export class EventsController {
     private readonly eventsService: EventsService,
     private readonly logger: LoggerService,
     private readonly metrics: MetricsService,
-    private readonly healthService: HealthService
+    private readonly healthService: HealthService,
+    private readonly eventStorage: EventStorageService
   ) {}
 
   @Post()
@@ -32,44 +34,26 @@ export class EventsController {
     @Headers('x-correlation-id') correlationId?: string
   ): Promise<any> {
     if (this.healthService.isShuttingDownNow()) {
-      throw new HttpException({
-        statusCode: HttpStatus.SERVICE_UNAVAILABLE,
-        message: 'Service is shutting down'
-      }, HttpStatus.SERVICE_UNAVAILABLE)
+      return [{ success: false, error: 'Service is shutting down' }]
     }
-    const corrId = correlationId || uuidv4()
     const parsed = EventArraySchema.safeParse(eventPayloads)
     if (!parsed.success) {
-      throw new BadRequestException(parsed.error)
+      this.metrics.incrementFailed('validation_failed')
+      return [{ success: false, error: parsed.error }]
     }
-    try {
-      const result = await this.eventsService.processEvents(parsed.data, corrId)
-      this.logger.logInfo('Webhook batch processed', { correlationId: corrId })
-      return result
-    } catch (error) {
-      const isNatsPublishError =
-        error instanceof HttpException &&
-        error.message === 'Failed to publish event to NATS'
-      if (!(error instanceof BadRequestException) && !isNatsPublishError) {
-        this.metrics.incrementFailed(error.message || 'Unknown error')
+    const results: { success: boolean; error?: any }[] = []
+    for (const event of parsed.data) {
+      try {
+        await this.eventStorage.add(event)
+        this.metrics.incrementAccepted(event.source, event.funnelStage, event.eventType)
+        results.push({ success: true })
+      } catch (error: any) {
+        this.metrics.incrementFailed('storage_failed')
+        this.logger.logError(error?.message || error)
+        results.push({ success: false, error: error?.message || error })
       }
-      this.logger.logError('Webhook batch processing failed', {
-        correlationId: corrId,
-        error: error.message || 'Unknown error'
-      })
-      if (error.status === 400) {
-        const response = typeof error.getResponse === 'function' ? error.getResponse() : {}
-        const details = response && typeof response === 'object' && 'details' in response ? response.details : null
-        throw new HttpException({
-          statusCode: HttpStatus.BAD_REQUEST,
-          message: error.message,
-          details
-        }, HttpStatus.BAD_REQUEST)
-      }
-      throw new HttpException({
-        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
-        message: 'Internal server error'
-      }, HttpStatus.INTERNAL_SERVER_ERROR)
     }
+    this.logger.logInfo('Webhook batch processed', { count: results.length })
+    return results
   }
 } 
