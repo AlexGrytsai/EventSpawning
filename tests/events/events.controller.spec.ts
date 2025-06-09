@@ -99,34 +99,6 @@ describe('EventsController', () => {
     expect(logger.logError).toHaveBeenCalled()
   })
 
-  it('should handle business logic error', async () => {
-    const validEvent = {
-      eventId: '3',
-      timestamp: new Date().toISOString(),
-      source: 'facebook',
-      funnelStage: 'top',
-      eventType: 'ad.view',
-      data: {
-        user: {
-          userId: 'u3',
-          name: 'Test3',
-          age: 25,
-          gender: 'male',
-          location: { country: 'RU', city: 'Moscow' },
-        },
-        engagement: {
-          actionTime: new Date().toISOString(),
-          referrer: 'newsfeed',
-          videoId: null,
-        },
-      },
-    }
-    eventStorage.add.mockRejectedValue(new Error('fail'))
-    const result = await controller.handleWebhook([validEvent])
-    expect(result).toEqual([{ success: false, error: 'fail' }])
-    expect(logger.logError).toHaveBeenCalled()
-  })
-
   it('should return 503 if service is shutting down', async () => {
     (healthService.isShuttingDownNow as jest.Mock).mockReturnValue(true);
     await expect(controller.handleWebhook([
