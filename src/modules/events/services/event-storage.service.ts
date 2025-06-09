@@ -1,11 +1,8 @@
 import { Injectable } from '@nestjs/common'
 import { EventSchema } from '../dto/event.zod'
-import { z } from 'zod'
 import * as fs from 'fs/promises'
-import * as path from 'path'
-import { createWriteStream, createReadStream, existsSync, renameSync } from 'fs'
+import { createWriteStream, existsSync } from 'fs'
 import { EventEmitter } from 'events'
-import { randomUUID } from 'crypto'
 
 const FLUSH_INTERVAL = +(process.env.EVENTS_FLUSH_INTERVAL_MS || 1000)
 const BACKUP_INTERVAL = +(process.env.EVENTS_BACKUP_INTERVAL_MS || 60000)
@@ -42,15 +39,15 @@ export class EventStorageService {
   async getAll() {
     try {
       const filePath = process.env.EVENTS_FILE_PATH || '/data/events.jsonl'
-      if (!existsSync(filePath)) {
-        return []
-      }
-      const data = await fs.readFile(filePath, 'utf-8')
-      return data
+      const fileContent = await fs.readFile(filePath, 'utf-8')
+      return fileContent
         .split('\n')
         .filter(Boolean)
         .map(line => JSON.parse(line))
-    } catch {
+    } catch (err: any) {
+      if (err.code === 'ENOENT') {
+        return []
+      }
       this.metrics.readErrors++
       return []
     }
@@ -59,9 +56,7 @@ export class EventStorageService {
   async removeById(eventId: string) {
     try {
       const filePath = process.env.EVENTS_FILE_PATH || '/data/events.jsonl'
-      if (!existsSync(filePath)) {
-        return
-      }
+      this.queue = this.queue.filter((event: any) => event.eventId !== eventId)
       const data = await fs.readFile(filePath, 'utf-8')
       const lines = data.split('\n').filter(Boolean)
       const filtered = lines.filter(line => {
@@ -91,7 +86,10 @@ export class EventStorageService {
       for (const event of toWrite) {
         stream.write(JSON.stringify(event) + '\n')
       }
-      await new Promise(resolve => stream.end(resolve))
+      await new Promise((resolve, reject) => {
+        stream.on('error', reject)
+        stream.end(resolve)
+      })
       this.metrics.lastFlushDurationMs = Date.now() - start
     } catch {
       this.metrics.writeErrors++
