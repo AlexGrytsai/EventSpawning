@@ -123,4 +123,22 @@ export class NatsPublisher implements OnModuleInit, OnModuleDestroy {
       await (client as Closable).close()
     }
   }
+
+  async batchPublish(
+    baseTopic: string,
+    events: { eventType: string }[],
+    correlationId?: string
+  ) {
+    await this.readyPromise
+    const results = await Promise.all(
+      events.map(async (event) => {
+        try {
+          return await this.publish(baseTopic, event, correlationId)
+        } catch (err) {
+          return { success: false, error: err instanceof Error ? err.message : err, event }
+        }
+      })
+    )
+    return results
+  }
 } 
