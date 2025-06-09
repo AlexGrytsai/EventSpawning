@@ -3,6 +3,8 @@ import { EventSchema } from '../dto/event.zod'
 import * as fs from 'fs/promises'
 import { createWriteStream, existsSync } from 'fs'
 import { EventEmitter } from 'events'
+import { LoggerService } from '../../../common/services/logger.service'
+import { MetricsService } from '../../metrics/services/metrics.service'
 
 const FLUSH_INTERVAL = +(process.env.EVENTS_FLUSH_INTERVAL_MS || 1000)
 const BACKUP_INTERVAL = +(process.env.EVENTS_BACKUP_INTERVAL_MS || 60000)
@@ -21,7 +23,10 @@ export class EventStorageService {
     lastFlushDurationMs: 0,
   }
 
-  constructor() {
+  constructor(
+    private readonly logger: LoggerService,
+    private readonly metricsService: MetricsService
+  ) {
     this.startFlushTimer()
     this.startBackupTimer()
   }
@@ -29,11 +34,18 @@ export class EventStorageService {
   async add(event: unknown) {
     const parsed = EventSchema.safeParse(event)
     if (!parsed.success) {
+      this.metricsService.incrementFailed('validation_failed')
       throw new Error('Invalid event')
     }
-    this.queue.push(parsed.data)
-    this.metrics.eventsInQueue = this.queue.length
-    this.eventEmitter.emit('eventAdded')
+    try {
+      this.queue.push(parsed.data)
+      this.metrics.eventsInQueue = this.queue.length
+      this.eventEmitter.emit('eventAdded')
+    } catch (error) {
+      this.metricsService.incrementFailed('storage_failed')
+      this.logger.logError('Failed to add event to queue', { error: error.message, event })
+      throw error
+    }
   }
 
   async getAll() {
@@ -49,7 +61,9 @@ export class EventStorageService {
         return []
       }
       this.metrics.readErrors++
-      return []
+      this.metricsService.incrementFailed('read_failed')
+      this.logger.logError('Failed to read events file', { error: err.message })
+      throw err
     }
   }
 
@@ -68,8 +82,10 @@ export class EventStorageService {
         }
       })
       await fs.writeFile(filePath, filtered.join('\n') + '\n', 'utf-8')
-    } catch {
+    } catch (err: any) {
       this.metrics.writeErrors++
+      this.metricsService.incrementFailed('remove_failed')
+      this.logger.logError('Failed to remove event by id', { error: err.message, eventId })
     }
   }
 
@@ -91,8 +107,10 @@ export class EventStorageService {
         stream.end(resolve)
       })
       this.metrics.lastFlushDurationMs = Date.now() - start
-    } catch {
+    } catch (err: any) {
       this.metrics.writeErrors++
+      this.metricsService.incrementFailed('flush_failed')
+      this.logger.logError('Failed to flush queue to file', { error: err.message })
       this.queue.unshift(...toWrite)
     } finally {
       this.flushing = false
@@ -111,8 +129,10 @@ export class EventStorageService {
       if (existsSync(filePath)) {
         await fs.copyFile(filePath, backupPath)
       }
-    } catch {
+    } catch (err: any) {
       this.metrics.writeErrors++
+      this.metricsService.incrementFailed('backup_failed')
+      this.logger.logError('Failed to backup events file', { error: err.message })
     }
   }
 
