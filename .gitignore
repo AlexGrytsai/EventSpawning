@@ -92,6 +92,10 @@ fabric.properties
 # End of https://www.toptal.com/developers/gitignore/api/webstorm+all
 
 .env
+.env.development
+.env.production
+.env.staging
 node_modules
 coverage
 .nyc_output
+*.sql

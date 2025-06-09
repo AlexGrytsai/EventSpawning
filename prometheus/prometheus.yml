@@ -1,0 +1,26 @@
+global:
+  scrape_interval: 15s
+  external_labels:
+    monitor: 'eventspawning-monitor'
+
+scrape_configs:
+  - job_name: 'prometheus'
+    scrape_interval: 5s
+    static_configs:
+      - targets: ['localhost:9090']
+
+  - job_name: 'gateway'
+    static_configs:
+      - targets: ['gateway:3000']
+
+  - job_name: 'fb-collector'
+    static_configs:
+      - targets: ['fb-collector:3001']
+
+  - job_name: 'ttk-collector'
+    static_configs:
+      - targets: ['ttk-collector:3002']
+
+  - job_name: 'reporter'
+    static_configs:
+      - targets: ['reporter:4000']

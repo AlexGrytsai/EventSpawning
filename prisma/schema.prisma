@@ -20,6 +20,7 @@ model User {
 
 model Event {
   id           String   @id
+  eventId      String   @unique
   timestamp    DateTime
   source       String
   funnelStage  String
@@ -53,4 +54,5 @@ model Demographics {
   gender       String?
   location     Json?
   followers    Int?
+  source       String
 } 
