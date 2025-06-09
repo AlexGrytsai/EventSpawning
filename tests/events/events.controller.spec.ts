@@ -6,7 +6,7 @@ import { HealthService } from '../../src/modules/health/services/health.service'
 
 describe('EventsController', () => {
   let controller: EventsController;
-  let eventsService: { processEvent: jest.Mock, processEvents: jest.Mock };
+  let eventsService: { processEvent: jest.Mock, processEvents: jest.Mock, processEventsBatch: jest.Mock };
   let logger: LoggerService;
   let metrics: MetricsService;
   let healthService: HealthService;
@@ -15,7 +15,7 @@ describe('EventsController', () => {
 
   beforeEach(() => {
     register.clear();
-    eventsService = { processEvent: jest.fn(), processEvents: jest.fn() };
+    eventsService = { processEvent: jest.fn(), processEvents: jest.fn(), processEventsBatch: jest.fn() };
     correlationIdService = { getId: jest.fn().mockReturnValue('test-cid') } as any;
     logger = new LoggerService({ get: jest.fn() } as any, correlationIdService as any);
     metrics = new MetricsService() as any;
