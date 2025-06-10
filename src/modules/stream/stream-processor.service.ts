@@ -2,6 +2,7 @@ import { createReadStream, createWriteStream } from 'fs'
 import { pipeline } from 'stream/promises'
 import { parser } from 'stream-json'
 import { streamArray } from 'stream-json/streamers/StreamArray'
+import { Transform } from 'stream'
 import { EventSchema } from '../../common/validation/event.schema'
 import { StructuredLogger } from '../../common/logger/structured-logger'
 
@@ -14,24 +15,27 @@ export class StreamProcessorService {
     const jsonParser = parser()
     const arrayStreamer = streamArray()
 
-    const processStream = async () => {
-      for await (const { value } of arrayStreamer) {
+    const validateAndWrite = new Transform({
+      objectMode: true,
+      transform: (chunk, _encoding, callback) => {
+        const { value } = chunk
         const result = EventSchema.safeParse(value)
         if (result.success) {
           writeStream.write(JSON.stringify(result.data) + '\n')
         } else {
           this.logger.error('Invalid event', { errors: result.error.errors, event: value }, correlationId)
         }
+        callback()
       }
-    }
+    })
 
     try {
-      await pipeline(readStream, jsonParser, arrayStreamer, async function* (source) {
-        for await (const chunk of source) {
-          yield chunk
-        }
-      })
-      await processStream()
+      await pipeline(
+        readStream,
+        jsonParser,
+        arrayStreamer,
+        validateAndWrite
+      )
     } catch (error) {
       this.logger.error('Stream processing error', { error }, correlationId)
     } finally {
