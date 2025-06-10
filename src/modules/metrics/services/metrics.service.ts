@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common'
-import { Counter, Histogram, register } from 'prom-client'
+import { Counter, Histogram, Gauge, register } from 'prom-client'
 
 @Injectable()
 export class MetricsService {
@@ -17,6 +17,15 @@ export class MetricsService {
         name: 'event_processing_time_ms',
         help: 'Processing time of events in ms',
         buckets: [10, 50, 100, 200, 500, 1000, 2000, 5000]
+    })
+    private batchConcurrencyGauge = (register.getSingleMetric('events_batch_concurrency') as Gauge) || new Gauge({
+        name: 'events_batch_concurrency',
+        help: 'Current number of concurrently processed event chunks'
+    })
+    private batchChunkProcessingTime = (register.getSingleMetric('events_batch_chunk_processing_time_ms') as Histogram) || new Histogram({
+        name: 'events_batch_chunk_processing_time_ms',
+        help: 'Processing time of event batch chunk in ms',
+        buckets: [10, 50, 100, 200, 500, 1000, 2000, 5000, 10000]
     })
 
 /**
@@ -67,5 +76,17 @@ export class MetricsService {
      */
     getMetrics(): Promise<string> {
         return register.metrics()
+    }
+    setBatchConcurrency(value: number) {
+        this.batchConcurrencyGauge.set(value)
+    }
+    incrementBatchConcurrency() {
+        this.batchConcurrencyGauge.inc()
+    }
+    decrementBatchConcurrency() {
+        this.batchConcurrencyGauge.dec()
+    }
+    observeBatchChunkProcessingTime(ms: number) {
+        this.batchChunkProcessingTime.observe(ms)
     }
 }

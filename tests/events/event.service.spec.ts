@@ -23,6 +23,7 @@ describe('EventsService', () => {
   let prisma: { event: { create: jest.Mock } };
   let correlationIdService: { runWithId: (id: string, fn: any) => any; getId: () => string };
   let dlq: DeadLetterQueueService;
+  let eventPersistence: any;
 
   beforeEach(() => {
     register.clear();
@@ -35,13 +36,14 @@ describe('EventsService', () => {
     loggerService = new LoggerService({ get: jest.fn() } as any, correlationIdService as any);
     prisma = { event: { create: jest.fn() } };
     dlq = { saveChunk: jest.fn() } as any;
+    eventPersistence = { saveEvent: jest.fn(), find: jest.fn() };
     jest.spyOn(metricsService, 'incrementAccepted').mockImplementation(jest.fn());
     jest.spyOn(metricsService, 'incrementFailed').mockImplementation(jest.fn());
     jest.spyOn(metricsService, 'observeProcessingTime').mockImplementation(jest.fn());
     jest.spyOn(loggerService, 'logInfo').mockImplementation(jest.fn());
     jest.spyOn(loggerService, 'logEvent').mockImplementation(jest.fn());
     jest.spyOn(loggerService, 'logError').mockImplementation(jest.fn());
-    service = new EventsService(loggerService, natsPublisher as any, metricsService, prisma as any, correlationIdService as any, dlq);
+    service = new EventsService(loggerService, natsPublisher as any, metricsService, prisma as any, correlationIdService as any, dlq, eventPersistence);
   });
 
   it('should process event successfully', async () => {
@@ -138,7 +140,7 @@ describe('EventsService', () => {
       }
     };
     const error = new MockPrismaClientKnownRequestError('Unique constraint', 'P2002', { target: ['eventId'] });
-    prisma.event.create.mockRejectedValueOnce(error);
+    eventPersistence.saveEvent = jest.fn().mockRejectedValueOnce(error);
     const result = await service.processEvent(validPayload, 'corr-unique');
     expect(result).toEqual({ success: true, alreadyProcessed: true, correlationId: 'corr-unique' });
     expect(natsPublisher.publish).not.toHaveBeenCalled();
@@ -150,18 +152,33 @@ describe('EventsService batch processing', () => {
   let prisma: any
   let nats: any
   let dlq: any
+  let eventPersistence: any
 
   beforeEach(() => {
     prisma = { event: { createMany: jest.fn() } }
     nats = { batchPublish: jest.fn() }
     dlq = { saveChunk: jest.fn() }
+    eventPersistence = { 
+      saveEvent: jest.fn(async (event) => { 
+        await prisma.event.createMany(); 
+      }),
+      find: jest.fn() 
+    }
     service = new EventsService(
       { logError: jest.fn(), logEvent: jest.fn(), logInfo: jest.fn() } as any,
       nats,
-      { incrementFailed: jest.fn(), incrementAccepted: jest.fn(), observeProcessingTime: jest.fn() } as any,
+      {
+        incrementFailed: jest.fn(),
+        incrementAccepted: jest.fn(),
+        observeProcessingTime: jest.fn(),
+        incrementBatchConcurrency: jest.fn(),
+        decrementBatchConcurrency: jest.fn(),
+        observeBatchChunkProcessingTime: jest.fn()
+      } as any,
       prisma,
       { getId: jest.fn() } as any,
-      dlq
+      dlq,
+      eventPersistence
     )
   })
 
