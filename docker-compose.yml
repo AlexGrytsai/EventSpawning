@@ -1,20 +1,3 @@
-x-default-resources: &default-resources
-  deploy:
-    resources:
-      limits:
-        memory: 512M
-        cpus: '0.5'
-      reservations:
-        memory: 256M
-        cpus: '0.25'
-
-x-default-ulimits: &default-ulimits
-  ulimits:
-    nproc: 1024
-    nofile:
-      soft: 4096
-      hard: 4096
-
 services:
   publisher:
     image: andriiuni/events
@@ -63,7 +46,19 @@ services:
         condition: service_healthy
     volumes:
       - gatewaydata:/data
-    <<: [*default-resources, *default-ulimits]
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
+        reservations:
+          memory: 256M
+          cpus: '0.25'
+    ulimits:
+      nproc: 1024
+      nofile:
+        soft: 4096
+        hard: 4096
 
   fb-collector:
     build:
@@ -89,7 +84,19 @@ services:
       timeout: 5s
       retries: 5
       start_period: 30s
-    <<: [*default-resources, *default-ulimits]
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
+        reservations:
+          memory: 256M
+          cpus: '0.25'
+    ulimits:
+      nproc: 1024
+      nofile:
+        soft: 4096
+        hard: 4096
 
   ttk-collector:
     build:
@@ -115,7 +122,19 @@ services:
       timeout: 5s
       retries: 5
       start_period: 30s
-    <<: [*default-resources, *default-ulimits]
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
+        reservations:
+          memory: 256M
+          cpus: '0.25'
+    ulimits:
+      nproc: 1024
+      nofile:
+        soft: 4096
+        hard: 4096
 
   reporter:
     build:
@@ -133,13 +152,27 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      nats:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "sh", "-c", "curl -f http://localhost:4000/health/live && curl -f http://localhost:4000/health/ready"]
       interval: 10s
       timeout: 5s
       retries: 5
       start_period: 30s
-    <<: [*default-resources, *default-ulimits]
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
+        reservations:
+          memory: 256M
+          cpus: '0.25'
+    ulimits:
+      nproc: 1024
+      nofile:
+        soft: 4096
+        hard: 4096
 
   postgres:
     image: postgres:latest
@@ -216,7 +249,19 @@ services:
       timeout: 5s
       retries: 5
       start_period: 30s
-    <<: [*default-resources, *default-ulimits]
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
+        reservations:
+          memory: 256M
+          cpus: '0.25'
+    ulimits:
+      nproc: 1024
+      nofile:
+        soft: 4096
+        hard: 4096
 
   grafana:
     image: grafana/grafana:latest
@@ -232,7 +277,19 @@ services:
       timeout: 5s
       retries: 5
       start_period: 30s
-    <<: [*default-resources, *default-ulimits]
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
+        reservations:
+          memory: 256M
+          cpus: '0.25'
+    ulimits:
+      nproc: 1024
+      nofile:
+        soft: 4096
+        hard: 4096
 
 volumes:
   gatewaydata:
