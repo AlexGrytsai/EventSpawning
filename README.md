@@ -7,6 +7,12 @@ A scalable, maintainable event processing system for ingesting, processing, and 
 
 1. Reporter startup error: NATS JetStream — "max age needs to be >= 100ms". This occurs during JetStream stream initialization if the max_age parameter is set below 100 milliseconds or the required stream is missing.
 
+2. Insufficient Unit Test Coverage: The current suite of unit tests does not comprehensively cover all critical components and edge cases. Additional unit tests are required to ensure robust validation of business logic and error handling.
+
+3. Missing Integration Tests: Integration tests for end-to-end workflows and service interactions are not yet implemented. This limits the ability to verify correct behavior across system boundaries and detect issues arising from service integration.
+
+4. Manual Testing Required: Manual exploratory testing has not been fully performed. Comprehensive manual testing is necessary to identify usability issues, edge cases, and potential gaps not covered by automated tests.
+
 ## Architecture
 - **Publisher**: Sends webhook events to the gateway (Docker image: `andriiuni/events`).
 - **Gateway**: Receives webhook events via HTTP, validates, and publishes them to NATS JetStream topics.
