@@ -128,8 +128,14 @@ export class EventsService {
   }
 
   async processEventsBatch(eventPayloads: unknown[], correlationId?: string) {
-    const chunkSize = +(process.env.EVENTS_CHUNK_SIZE || 100)
-    const concurrency = +(process.env.EVENTS_BATCH_CONCURRENCY || 5)
+    let chunkSize = Number(process.env.EVENTS_CHUNK_SIZE)
+    if (isNaN(chunkSize)) {
+      chunkSize = 100
+    }
+    let concurrency = Number(process.env.EVENTS_BATCH_CONCURRENCY)
+    if (isNaN(concurrency)) {
+      concurrency = 5
+    }
     const validEvents: EventType[] = []
     const invalidResults: { success: false; error: unknown; payload: unknown }[] = []
     for (const payload of eventPayloads) {
@@ -146,9 +152,7 @@ export class EventsService {
     }
     const results: Array<any> = [...invalidResults]
     const limit = pLimit(concurrency)
-    let currentConcurrency = 0
     const chunkPromises = chunks.map(chunk => limit(async () => {
-      currentConcurrency++
       this.metrics.incrementBatchConcurrency()
       const start = Date.now()
       try {
@@ -164,7 +168,6 @@ export class EventsService {
       } finally {
         const duration = Date.now() - start
         this.metrics.observeBatchChunkProcessingTime(duration)
-        currentConcurrency--
         this.metrics.decrementBatchConcurrency()
       }
     }))
