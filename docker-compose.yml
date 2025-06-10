@@ -1,3 +1,20 @@
+x-default-resources: &default-resources
+  deploy:
+    resources:
+      limits:
+        memory: 512M
+        cpus: '0.5'
+      reservations:
+        memory: 256M
+        cpus: '0.25'
+
+x-default-ulimits: &default-ulimits
+  ulimits:
+    nproc: 1024
+    nofile:
+      soft: 4096
+      hard: 4096
+
 services:
   publisher:
     image: andriiuni/events
@@ -40,23 +57,13 @@ services:
       retries: 5
       start_period: 30s
     depends_on:
-      - nats
-      - postgres
+      nats:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
     volumes:
       - gatewaydata:/data
-    deploy:
-      resources:
-        limits:
-          memory: 512M
-          cpus: '0.5'
-        reservations:
-          memory: 256M
-          cpus: '0.25'
-    ulimits:
-      nproc: 1024
-      nofile:
-        soft: 4096
-        hard: 4096
+    <<: [*default-resources, *default-ulimits]
 
   fb-collector:
     build:
@@ -72,27 +79,17 @@ services:
       - 3001:3001
     command: sh -c "npx prisma migrate deploy && npx prisma generate && node dist/main.js"
     depends_on:
-      - nats
-      - postgres
+      nats:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "sh", "-c", "curl -f http://localhost:3001/health/live && curl -f http://localhost:3001/health/ready"]
       interval: 10s
       timeout: 5s
       retries: 5
       start_period: 30s
-    deploy:
-      resources:
-        limits:
-          memory: 512M
-          cpus: '0.5'
-        reservations:
-          memory: 256M
-          cpus: '0.25'
-    ulimits:
-      nproc: 1024
-      nofile:
-        soft: 4096
-        hard: 4096
+    <<: [*default-resources, *default-ulimits]
 
   ttk-collector:
     build:
@@ -107,8 +104,10 @@ services:
     ports:
       - 3002:3002
     depends_on:
-      - nats
-      - postgres
+      nats:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
     command: sh -c "npx prisma migrate deploy && npx prisma generate && node dist/main.js"
     healthcheck:
       test: ["CMD", "sh", "-c", "curl -f http://localhost:3002/health/live && curl -f http://localhost:3002/health/ready"]
@@ -116,19 +115,7 @@ services:
       timeout: 5s
       retries: 5
       start_period: 30s
-    deploy:
-      resources:
-        limits:
-          memory: 512M
-          cpus: '0.5'
-        reservations:
-          memory: 256M
-          cpus: '0.25'
-    ulimits:
-      nproc: 1024
-      nofile:
-        soft: 4096
-        hard: 4096
+    <<: [*default-resources, *default-ulimits]
 
   reporter:
     build:
@@ -152,19 +139,7 @@ services:
       timeout: 5s
       retries: 5
       start_period: 30s
-    deploy:
-      resources:
-        limits:
-          memory: 512M
-          cpus: '0.5'
-        reservations:
-          memory: 256M
-          cpus: '0.25'
-    ulimits:
-      nproc: 1024
-      nofile:
-        soft: 4096
-        hard: 4096
+    <<: [*default-resources, *default-ulimits]
 
   postgres:
     image: postgres:latest
@@ -199,13 +174,14 @@ services:
 
   nats:
     image: nats:latest
-    command: [ "-js" ]
+    command: ["-c", "/etc/nats/nats-server.conf"]
     restart: always
     ports:
       - 4222:4222
       - 8222:8222
     volumes:
       - natsdata:/data
+      - ./nats-config:/etc/nats
     healthcheck:
       test: ["CMD", "nats-server", "--signal=healthcheck"]
       interval: 10s
@@ -240,19 +216,7 @@ services:
       timeout: 5s
       retries: 5
       start_period: 30s
-    deploy:
-      resources:
-        limits:
-          memory: 512M
-          cpus: '0.5'
-        reservations:
-          memory: 256M
-          cpus: '0.25'
-    ulimits:
-      nproc: 1024
-      nofile:
-        soft: 4096
-        hard: 4096
+    <<: [*default-resources, *default-ulimits]
 
   grafana:
     image: grafana/grafana:latest
@@ -268,19 +232,7 @@ services:
       timeout: 5s
       retries: 5
       start_period: 30s
-    deploy:
-      resources:
-        limits:
-          memory: 512M
-          cpus: '0.5'
-        reservations:
-          memory: 256M
-          cpus: '0.25'
-    ulimits:
-      nproc: 1024
-      nofile:
-        soft: 4096
-        hard: 4096
+    <<: [*default-resources, *default-ulimits]
 
 volumes:
   gatewaydata:
