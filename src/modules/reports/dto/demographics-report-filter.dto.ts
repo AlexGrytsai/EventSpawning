@@ -32,12 +32,12 @@ export class DemographicsReportFilterDto {
   @IsString()
   gender?: string
 
-  @ApiPropertyOptional({ description: 'Country', type: String, example: 'Russia' })
+  @ApiPropertyOptional({ description: 'Country', type: String, example: 'Ukraine' })
   @IsOptional()
   @IsString()
   locationCountry?: string
 
-  @ApiPropertyOptional({ description: 'City', type: String, example: 'Moscow' })
+  @ApiPropertyOptional({ description: 'City', type: String, example: 'Kyiv' })
   @IsOptional()
   @IsString()
   locationCity?: string
