@@ -47,7 +47,7 @@ describe('EventsController', () => {
           name: 'Test',
           age: 20,
           gender: 'male',
-          location: { country: 'RU', city: 'Moscow' },
+          location: { country: 'UA', city: 'Kyiv' },
         },
         engagement: {
           actionTime: new Date().toISOString(),
@@ -82,7 +82,7 @@ describe('EventsController', () => {
           name: 'Test2',
           age: 22,
           gender: 'female',
-          location: { country: 'RU', city: 'Moscow' },
+          location: { country: 'UA', city: 'Kyiv' },
         },
         engagement: {
           actionTime: new Date().toISOString(),
@@ -139,7 +139,7 @@ describe('EventsController', () => {
           name: 'Test',
           age: 20,
           gender: 'male',
-          location: { country: 'RU', city: 'Moscow' },
+          location: { country: 'UA', city: 'Kyiv' },
         },
         engagement: {
           actionTime: new Date().toISOString(),
@@ -174,7 +174,7 @@ describe('EventsController', () => {
           name: 'Test2',
           age: 22,
           gender: 'female',
-          location: { country: 'RU', city: 'Moscow' },
+          location: { country: 'UA', city: 'Kyiv' },
         },
         engagement: {
           actionTime: new Date().toISOString(),

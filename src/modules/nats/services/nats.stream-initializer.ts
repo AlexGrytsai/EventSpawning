@@ -22,6 +22,10 @@ export class NatsStreamInitializer implements OnModuleInit {
       {
         name: 'tiktok',
         subjects: ['tiktok.events.*']
+      },
+      {
+        name: 'events',
+        subjects: ['events.*']
       }
     ]
     for (const stream of streams) {
