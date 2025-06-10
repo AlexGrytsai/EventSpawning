@@ -97,7 +97,10 @@ export class NatsPublisher implements OnModuleInit, OnModuleDestroy {
         const errorCategory = err?.name || 'UnknownError'
         this.metrics.incrementFailed(errorCategory)
         if (is503 && attempt < maxRetries) {
-          await new Promise(res => setTimeout(res, delay))
+          // Add jitter to the delay to avoid retry storms
+          const jitter = Math.random() * delay
+          const jitteredDelay = delay + jitter
+          await new Promise(res => setTimeout(res, jitteredDelay))
           delay = Math.min(delay * 2, 5000)
           attempt++
           continue
