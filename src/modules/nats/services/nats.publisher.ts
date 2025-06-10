@@ -42,6 +42,8 @@ export class NatsPublisher implements OnModuleInit, OnModuleDestroy {
    * @param baseTopic - The base topic to publish to.
    * @param event - The event to publish, which must include an `eventType` property.
    * @param correlationId - An optional correlation ID to include in the headers.
+   * @param maxRetries - The maximum number of retry attempts.
+   * @param initialDelay - The initial delay between retry attempts.
    *
    * @returns A promise that resolves with the result of publishing the message.
    *
@@ -51,6 +53,8 @@ export class NatsPublisher implements OnModuleInit, OnModuleDestroy {
     baseTopic: string,
     event: { eventType: string },
     correlationId?: string,
+    maxRetries = 5,
+    initialDelay = 200
   ) {
     if (!this.readyResolve) {
       throw new HttpException(
@@ -62,35 +66,50 @@ export class NatsPublisher implements OnModuleInit, OnModuleDestroy {
     const subject = this.formatSubject(baseTopic, event.eventType)
     const hdrs = this.buildHeaders(correlationId)
 
-    try {
-      const result = await this.js.publish(
-        subject,
-        JSON.stringify(event),
-        { headers: hdrs },
-      )
-      this.logger.logInfo('Event published to NATS', {
-        subject,
-        correlationId,
-        seq: result.seq,
-      })
-      return { 
-        success: true, 
-        correlationId: correlationId || 'unknown',
-        subject,
-        seq: result.seq
+    let attempt = 0
+    let delay = initialDelay
+    while (attempt <= maxRetries) {
+      try {
+        const result = await this.js.publish(
+          subject,
+          JSON.stringify(event),
+          { headers: hdrs },
+        )
+        this.logger.logInfo('Event published to NATS', {
+          subject,
+          correlationId,
+          seq: result.seq,
+        })
+        return {
+          success: true,
+          correlationId: correlationId || 'unknown',
+          subject,
+          seq: result.seq
+        }
+      } catch (err: any) {
+        const is503 = err?.message?.includes('503') || err?.code === 503
+        this.logger.logError('Failed to publish event to NATS', {
+          subject,
+          correlationId,
+          error: err.message,
+          attempt,
+        })
+        const errorCategory = err?.name || 'UnknownError'
+        this.metrics.incrementFailed(errorCategory)
+        if (is503 && attempt < maxRetries) {
+          // Add jitter to the delay to avoid retry storms
+          const jitter = Math.random() * delay
+          const jitteredDelay = delay + jitter
+          await new Promise(res => setTimeout(res, jitteredDelay))
+          delay = Math.min(delay * 2, 5000)
+          attempt++
+          continue
+        }
+        throw new HttpException(
+          'Failed to publish event to NATS',
+          HttpStatus.INTERNAL_SERVER_ERROR
+        )
       }
-    } catch (err) {
-      this.logger.logError('Failed to publish event to NATS', {
-        subject,
-        correlationId,
-        error: err.message,
-      })
-      const errorCategory = err?.name || 'UnknownError'
-      this.metrics.incrementFailed(errorCategory)
-      throw new HttpException(
-        'Failed to publish event to NATS', 
-        HttpStatus.INTERNAL_SERVER_ERROR
-      )
     }
   }
 
@@ -122,5 +141,22 @@ export class NatsPublisher implements OnModuleInit, OnModuleDestroy {
     if (typeof client === 'object' && client !== null && 'close' in client && typeof (client as Closable).close === 'function') {
       await (client as Closable).close()
     }
+  }
+
+  async batchPublish(
+    baseTopic: string,
+    events: { eventType: string }[],
+    correlationId?: string
+  ) {
+    await this.readyPromise
+    return await Promise.all(
+          events.map(async (event) => {
+            try {
+              return await this.publish(baseTopic, event, correlationId)
+            } catch (err) {
+              return { success: false, error: err instanceof Error ? err.message : err, event }
+            }
+          })
+        );
   }
 } 

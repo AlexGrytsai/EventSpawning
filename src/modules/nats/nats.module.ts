@@ -4,12 +4,14 @@ import { NatsPublisher } from './services/nats.publisher'
 import { connect } from 'nats'
 import { LoggerModule } from '../../common/services/logger.module'
 import { MetricsModule } from '../metrics/metrics.module'
+import { NatsStreamInitializer } from './services/nats.stream-initializer'
 
 @Module({
   imports: [LoggerModule, MetricsModule],
   providers: [
     NatsPublisher,
     ConfigService,
+    NatsStreamInitializer,
     {
       provide: 'NATS_JS',
       /**

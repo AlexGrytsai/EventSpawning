@@ -93,14 +93,14 @@ describe('ReportsService - getDemographicsReport', () => {
 
   it('aggregates by age, gender, location for Facebook', async () => {
     prisma.demographics.groupBy.mockResolvedValue([
-      { age: 25, gender: 'male', location: { country: 'RU', city: 'Moscow' }, _count: { _all: 10 } },
-      { age: 30, gender: 'female', location: { country: 'RU', city: 'SPB' }, _count: { _all: 5 } },
+      { age: 25, gender: 'male', location: { country: 'UA', city: 'Kyiv' }, _count: { _all: 10 } },
+      { age: 30, gender: 'female', location: { country: 'UA', city: 'Lviv' }, _count: { _all: 5 } },
     ])
     const filter = { source: 'facebook' }
     const result = await service.getDemographicsReport(filter, 'test-cid')
     expect(result).toEqual([
-      { group: { age: 25, gender: 'male', location: { country: 'RU', city: 'Moscow' } }, count: 10 },
-      { group: { age: 30, gender: 'female', location: { country: 'RU', city: 'SPB' } }, count: 5 },
+      { group: { age: 25, gender: 'male', location: { country: 'UA', city: 'Kyiv' } }, count: 10 },
+      { group: { age: 30, gender: 'female', location: { country: 'UA', city: 'Lviv' } }, count: 5 },
     ])
   })
 

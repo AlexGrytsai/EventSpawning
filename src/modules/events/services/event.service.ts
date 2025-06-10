@@ -7,6 +7,12 @@ import { MetricsService } from '../../metrics/services/metrics.service'
 import { PrismaService } from '../../../common/services/prisma.service'
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library'
 import { CorrelationIdService } from '../../../common/services/correlation-id.service'
+import { DeadLetterQueueService } from './dead-letter-queue.service'
+import { z } from 'zod'
+import pLimit from 'p-limit'
+import { EventPersistenceService } from '../../../common/services/event-persistence.service'
+
+type EventType = z.infer<typeof EventSchema>
 
 @Injectable()
 /**
@@ -24,7 +30,9 @@ export class EventsService {
     private readonly nats: NatsPublisher,
     private readonly metrics: MetricsService,
     private readonly prisma: PrismaService,
-    private readonly correlationIdService: CorrelationIdService
+    private readonly correlationIdService: CorrelationIdService,
+    private readonly dlq: DeadLetterQueueService,
+    private readonly eventPersistence: EventPersistenceService
   ) {}
 
   /**
@@ -53,22 +61,7 @@ export class EventsService {
         const event = result.data
         this.logger.logEvent('Event received', { eventType: event.eventType, source: event.source, correlationId: id })
         try {
-          await this.prisma.event.create({
-            data: {
-              id: uuidv4(),
-              eventId: event.eventId,
-              timestamp: new Date(event.timestamp),
-              source: event.source,
-              funnelStage: event.funnelStage,
-              eventType: event.eventType,
-              userId: event.data?.user?.userId ?? null,
-              campaignId: (event.data?.engagement && typeof event.data.engagement === 'object' && 'campaignId' in event.data.engagement)
-                ? event.data.engagement.campaignId
-                : null,
-              engagement: event.data?.engagement ?? null,
-              raw: event,
-            } as any
-          })
+          await this.eventPersistence.saveEvent(event)
         } catch (err) {
           if (
             (err instanceof PrismaClientKnownRequestError ||
@@ -131,6 +124,54 @@ export class EventsService {
         results.push({ success: false, error: error.message, correlationId })
       }
     }
+    return results
+  }
+
+  async processEventsBatch(eventPayloads: unknown[], correlationId?: string) {
+    let chunkSize = Number(process.env.EVENTS_CHUNK_SIZE)
+    if (isNaN(chunkSize)) {
+      chunkSize = 100
+    }
+    let concurrency = Number(process.env.EVENTS_BATCH_CONCURRENCY)
+    if (isNaN(concurrency)) {
+      concurrency = 5
+    }
+    const validEvents: EventType[] = []
+    const invalidResults: { success: false; error: unknown; payload: unknown }[] = []
+    for (const payload of eventPayloads) {
+      const result = EventSchema.safeParse(payload)
+      if (result.success) {
+        validEvents.push(result.data)
+      } else {
+        invalidResults.push({ success: false, error: result.error.errors, payload })
+      }
+    }
+    const chunks: EventType[][] = []
+    for (let i = 0; i < validEvents.length; i += chunkSize) {
+      chunks.push(validEvents.slice(i, i + chunkSize))
+    }
+    const results: Array<any> = [...invalidResults]
+    const limit = pLimit(concurrency)
+    const chunkPromises = chunks.map(chunk => limit(async () => {
+      this.metrics.incrementBatchConcurrency()
+      const start = Date.now()
+      try {
+        for (const event of chunk) {
+          await this.eventPersistence.saveEvent(event)
+        }
+        const publishResults = await this.nats.batchPublish(chunk[0].source, chunk, correlationId)
+        results.push(...publishResults)
+        this.metrics.incrementAccepted(chunk[0].source, chunk[0].funnelStage, chunk[0].eventType)
+      } catch (err) {
+        await this.dlq.saveChunk(chunk)
+        results.push({ success: false, error: err instanceof Error ? err.message : err, chunk })
+      } finally {
+        const duration = Date.now() - start
+        this.metrics.observeBatchChunkProcessingTime(duration)
+        this.metrics.decrementBatchConcurrency()
+      }
+    }))
+    await Promise.all(chunkPromises)
     return results
   }
 }
